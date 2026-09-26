@@ -1363,14 +1363,24 @@ class AcademicRunnerApp {
     const scoreEl = document.getElementById('simProjectedScore');
     const statusEl = document.getElementById('simProjectedStatus');
     const marginDiffEl = document.getElementById('simMarginDiff');
+    const netMargin = stats.maxLossAllowed - (stats.totalAllocatedWeight - projectedEarned);
+    const isSafe = projectedEarned >= stats.target && netMargin >= 0;
 
     if (scoreEl) {
       scoreEl.textContent = `${projectedEarned.toFixed(2)}%`;
-      scoreEl.style.color = projectedEarned >= stats.target ? 'var(--neon-volt)' : 'var(--neon-crimson)';
+      scoreEl.style.color = isSafe ? 'var(--neon-volt)' : 'var(--neon-crimson)';
+      scoreEl.style.textShadow = isSafe ? '0 0 20px var(--neon-volt-glow)' : '0 0 20px var(--neon-crimson-glow)';
+      if (isSafe) {
+        scoreEl.classList.remove('critical');
+        scoreEl.classList.add('safe');
+      } else {
+        scoreEl.classList.remove('safe');
+        scoreEl.classList.add('critical');
+      }
     }
 
     if (statusEl) {
-      if (projectedEarned >= stats.target) {
+      if (isSafe) {
         statusEl.textContent = `TARGET MET (+${(projectedEarned - stats.target).toFixed(2)}% CLEAR)`;
         statusEl.className = 'sim-outcome-status status-pill safe';
       } else {
@@ -1380,8 +1390,18 @@ class AcademicRunnerApp {
     }
 
     if (marginDiffEl) {
-      const netMargin = stats.maxLossAllowed - (stats.totalAllocatedWeight - projectedEarned);
       marginDiffEl.textContent = `Projected Final Cushion: ${netMargin >= 0 ? '+' : ''}${netMargin.toFixed(2)}%`;
+      marginDiffEl.style.color = isSafe ? 'var(--text-mid)' : 'var(--neon-crimson)';
+      marginDiffEl.style.textShadow = isSafe ? 'none' : '0 0 10px var(--neon-crimson-glow)';
+    }
+
+    const cardEl = scoreEl ? scoreEl.closest('.sim-outcome-card') : null;
+    if (cardEl) {
+      if (isSafe) {
+        cardEl.classList.remove('critical');
+      } else {
+        cardEl.classList.add('critical');
+      }
     }
   }
 

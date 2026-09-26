@@ -1211,6 +1211,12 @@ body::before {
   align-items: center;
   text-align: center;
   gap: 10px;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.sim-outcome-card.critical {
+  border-color: var(--neon-crimson);
+  box-shadow: 0 0 15px var(--neon-crimson-glow);
 }
 
 .sim-outcome-label {
@@ -1225,6 +1231,17 @@ body::before {
   font-family: var(--font-mono);
   font-size: 44px;
   font-weight: 800;
+  color: var(--neon-volt);
+  text-shadow: 0 0 20px var(--neon-volt-glow);
+  transition: color 0.25s ease, text-shadow 0.25s ease;
+}
+
+.sim-outcome-score.critical {
+  color: var(--neon-crimson);
+  text-shadow: 0 0 20px var(--neon-crimson-glow);
+}
+
+.sim-outcome-score.safe {
   color: var(--neon-volt);
   text-shadow: 0 0 20px var(--neon-volt-glow);
 }
