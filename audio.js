@@ -7,10 +7,8 @@ class SoundFX {
     this.muted = localStorage.getItem('iitd_sfx_muted') === 'true';
     this.lastScrollClickTime = 0;
     this.lastClickSoundTime = 0;
-    this.windowScrollAccumulator = 0;
-    this.windowScrollTimer = null;
-    this.lastClampedWindowY = 0;
-    this.lastClampedWindowX = 0;
+    this.wheelAccumulator = 0;
+    this.lastWheelTime = 0;
     this.scrollListenerAttached = false;
     this.clickListenerAttached = false;
 
@@ -22,7 +20,8 @@ class SoundFX {
   init() {
     if (!this.ctx && (window.AudioContext || window.webkitAudioContext)) {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      this.ctx = new AudioCtx();
+      // Use lowest latency hint for instantaneous audio-visual synchronization
+      this.ctx = new AudioCtx({ latencyHint: 'interactive' });
     }
   }
 
@@ -34,8 +33,8 @@ class SoundFX {
         this.ctx.resume().catch(() => {});
       }
     };
-    // Unlocks browser AudioContext on first user interaction gesture
-    ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach(evt => {
+    // Pre-warm AudioContext on earliest possible interaction so first scroll has zero latency
+    ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart'].forEach(evt => {
       window.addEventListener(evt, unlock, { passive: true, once: true });
     });
   }
@@ -89,7 +88,7 @@ class SoundFX {
 
     const now = performance.now();
     // Throttle to ensure clean click separation without audio buffer overload on rapid motion
-    if (now - this.lastScrollClickTime < 28) return;
+    if (now - this.lastScrollClickTime < 24) return;
     this.lastScrollClickTime = now;
 
     const t = this.ctx.currentTime;
@@ -100,7 +99,7 @@ class SoundFX {
     // Directional pitch modulation: scrolling down has a solid tactical click, scrolling up is crisper/higher
     const baseFreq = isDown ? (1750 + jitter) : (2150 + jitter);
     const endFreq = isDown ? 420 : 650;
-    const duration = 0.015;
+    const duration = 0.014;
 
     // 1. High transient mechanical ratchet snap
     const osc = this.ctx.createOscillator();
@@ -126,136 +125,141 @@ class SoundFX {
 
     thump.type = 'sine';
     thump.frequency.setValueAtTime(160, t);
-    thump.frequency.exponentialRampToValueAtTime(50, t + 0.011);
+    thump.frequency.exponentialRampToValueAtTime(50, t + 0.010);
 
     thumpGain.gain.setValueAtTime(0.02, t);
-    thumpGain.gain.exponentialRampToValueAtTime(0.0008, t + 0.011);
+    thumpGain.gain.exponentialRampToValueAtTime(0.0008, t + 0.010);
 
     thump.connect(thumpGain);
     thumpGain.connect(this.ctx.destination);
 
     thump.start(t);
-    thump.stop(t + 0.011);
+    thump.stop(t + 0.010);
   }
 
-  // Motion-grounded scrolling detection: plays ONLY when the page or element ACTUALLY moves
+  // Evaluates instantly whether the element under cursor or window can scroll in the requested direction
+  canScroll(target, deltaY = 0, deltaX = 0) {
+    const isVertical = Math.abs(deltaY) >= Math.abs(deltaX);
+
+    // 1. Check if the element under cursor or any parent container is scrollable
+    let el = target instanceof Element ? target : null;
+    while (el && el !== document.body && el !== document.documentElement) {
+      const style = window.getComputedStyle(el);
+      const ovY = style.overflowY;
+      const ovX = style.overflowX;
+
+      if (isVertical && (ovY === 'auto' || ovY === 'scroll') && el.scrollHeight > el.clientHeight + 1) {
+        if (deltaY > 0 && el.scrollTop < el.scrollHeight - el.clientHeight - 1) {
+          return true; // Can scroll down inside this container
+        }
+        if (deltaY < 0 && el.scrollTop > 1) {
+          return true; // Can scroll up inside this container
+        }
+      }
+
+      if (!isVertical && (ovX === 'auto' || ovX === 'scroll') && el.scrollWidth > el.clientWidth + 1) {
+        if (deltaX > 0 && el.scrollLeft < el.scrollWidth - el.clientWidth - 1) {
+          return true;
+        }
+        if (deltaX < 0 && el.scrollLeft > 1) {
+          return true;
+        }
+      }
+
+      el = el.parentElement;
+    }
+
+    // 2. Check window / document scrolling
+    const docEl = document.scrollingElement || document.documentElement;
+    if (!docEl) return false;
+
+    const maxScrollY = Math.max(0, docEl.scrollHeight - window.innerHeight);
+    const maxScrollX = Math.max(0, docEl.scrollWidth - window.innerWidth);
+    const curY = window.scrollY || docEl.scrollTop || 0;
+    const curX = window.scrollX || docEl.scrollLeft || 0;
+
+    if (isVertical) {
+      if (maxScrollY <= 1) return false; // Entire document fits in viewport, cannot scroll
+      if (deltaY > 0) {
+        return curY < maxScrollY - 1; // Can scroll down
+      } else {
+        return curY > 1; // Can scroll up
+      }
+    } else {
+      if (maxScrollX <= 1) return false;
+      if (deltaX > 0) {
+        return curX < maxScrollX - 1;
+      } else {
+        return curX > 1;
+      }
+    }
+  }
+
+  // Instantaneous hardware-synchronized scrolling detection
   initScrollListener() {
     if (typeof window === 'undefined' || this.scrollListenerAttached) return;
     this.scrollListenerAttached = true;
 
-    const updateInitialPositions = () => {
-      const el = document.scrollingElement || document.documentElement;
-      if (!el) return;
-      const maxY = Math.max(0, el.scrollHeight - window.innerHeight);
-      const maxX = Math.max(0, el.scrollWidth - window.innerWidth);
-      this.lastClampedWindowY = Math.min(maxY, Math.max(0, window.scrollY || el.scrollTop || 0));
-      this.lastClampedWindowX = Math.min(maxX, Math.max(0, window.scrollX || el.scrollLeft || 0));
-    };
-
-    updateInitialPositions();
-
-    // Actual movement-based scroll handler (triggered ONLY when content actually moves)
-    const handleScroll = (e) => {
+    // 1. Mouse wheel and trackpad (Hardware interrupt event: ZERO LATENCY)
+    window.addEventListener('wheel', (e) => {
       if (this.muted) return;
 
-      const target = e.target;
-      let primaryDiff = 0;
+      const dy = e.deltaY;
+      const dx = e.deltaX;
+      const primaryDelta = Math.abs(dy) >= Math.abs(dx) ? dy : dx;
+      if (primaryDelta === 0) return;
 
-      // Case A: Window / Document scrolling
-      if (target === document || target === window || target === document.documentElement || target === document.body || !target) {
-        const el = document.scrollingElement || document.documentElement;
-        if (!el) return;
-
-        const maxScrollY = Math.max(0, el.scrollHeight - window.innerHeight);
-        const maxScrollX = Math.max(0, el.scrollWidth - window.innerWidth);
-
-        // If page has no scrollable range at all, do nothing
-        if (maxScrollY <= 0 && maxScrollX <= 0) return;
-
-        const rawY = window.scrollY || el.scrollTop || 0;
-        const rawX = window.scrollX || el.scrollLeft || 0;
-
-        // Clamp to physical bounds [0, maxScroll] to eliminate rubber-banding/overscroll noise at edges
-        const clampedY = Math.min(maxScrollY, Math.max(0, rawY));
-        const clampedX = Math.min(maxScrollX, Math.max(0, rawX));
-
-        const diffY = clampedY - this.lastClampedWindowY;
-        const diffX = clampedX - this.lastClampedWindowX;
-
-        this.lastClampedWindowY = clampedY;
-        this.lastClampedWindowX = clampedX;
-
-        // If clamped delta is 0 (i.e. user is at top scrolling up, or at bottom scrolling down), DO NOT PLAY SOUND
-        if (diffY === 0 && diffX === 0) return;
-
-        primaryDiff = Math.abs(diffY) >= Math.abs(diffX) ? diffY : diffX;
-
-        // Reset accumulator on direction change
-        if ((primaryDiff > 0 && this.windowScrollAccumulator < 0) || (primaryDiff < 0 && this.windowScrollAccumulator > 0)) {
-          this.windowScrollAccumulator = 0;
-        }
-
-        this.windowScrollAccumulator += primaryDiff;
-        const threshold = 28; // px of actual movement per click
-
-        if (Math.abs(this.windowScrollAccumulator) >= threshold) {
-          const direction = this.windowScrollAccumulator > 0 ? 1 : -1;
-          this.playScrollClick(direction);
-          this.windowScrollAccumulator = 0;
-        }
-
-        clearTimeout(this.windowScrollTimer);
-        this.windowScrollTimer = setTimeout(() => {
-          this.windowScrollAccumulator = 0;
-        }, 150);
-
-      } else if (target instanceof HTMLElement) {
-        // Case B: Scrollable inner containers (e.g. modals, lists)
-        const maxScrollY = Math.max(0, target.scrollHeight - target.clientHeight);
-        const maxScrollX = Math.max(0, target.scrollWidth - target.clientWidth);
-
-        if (maxScrollY <= 0 && maxScrollX <= 0) return;
-
-        const clampedY = Math.min(maxScrollY, Math.max(0, target.scrollTop));
-        const clampedX = Math.min(maxScrollX, Math.max(0, target.scrollLeft));
-
-        const lastY = target._lastClampedY !== undefined ? target._lastClampedY : clampedY;
-        const lastX = target._lastClampedX !== undefined ? target._lastClampedX : clampedX;
-
-        const diffY = clampedY - lastY;
-        const diffX = clampedX - lastX;
-
-        target._lastClampedY = clampedY;
-        target._lastClampedX = clampedX;
-
-        // If clamped delta is 0, container has reached the boundary and is not moving
-        if (diffY === 0 && diffX === 0) return;
-
-        primaryDiff = Math.abs(diffY) >= Math.abs(diffX) ? diffY : diffX;
-
-        target._scrollAccumulator = target._scrollAccumulator || 0;
-        if ((primaryDiff > 0 && target._scrollAccumulator < 0) || (primaryDiff < 0 && target._scrollAccumulator > 0)) {
-          target._scrollAccumulator = 0;
-        }
-
-        target._scrollAccumulator += primaryDiff;
-        const threshold = 28;
-
-        if (Math.abs(target._scrollAccumulator) >= threshold) {
-          const direction = target._scrollAccumulator > 0 ? 1 : -1;
-          this.playScrollClick(direction);
-          target._scrollAccumulator = 0;
-        }
-
-        clearTimeout(target._scrollTimer);
-        target._scrollTimer = setTimeout(() => {
-          target._scrollAccumulator = 0;
-        }, 150);
+      // FIRST: Check if the page or container CAN ACTUALLY SCROLL in this direction
+      if (!this.canScroll(e.target, dy, dx)) {
+        this.wheelAccumulator = 0;
+        return; // Page is at top/bottom or cannot move -> ZERO SOUND
       }
-    };
 
-    window.addEventListener('scroll', handleScroll, { passive: true, capture: true });
-    window.addEventListener('resize', updateInitialPositions, { passive: true });
+      this.lastWheelTime = performance.now();
+      const direction = primaryDelta > 0 ? 1 : -1;
+
+      // Discrete mouse wheel notch (standard wheels)
+      if (e.deltaMode !== 0 || Math.abs(primaryDelta) >= 45) {
+        this.playScrollClick(direction);
+        this.wheelAccumulator = 0;
+      } else {
+        // Continuous precision trackpad: accumulate small delta values
+        this.wheelAccumulator += primaryDelta;
+        const threshold = 22; // Low threshold for immediate tactile response without lag
+        if (Math.abs(this.wheelAccumulator) >= threshold) {
+          this.playScrollClick(direction);
+          this.wheelAccumulator = this.wheelAccumulator > 0
+            ? Math.max(0, this.wheelAccumulator - threshold)
+            : Math.min(0, this.wheelAccumulator + threshold);
+        }
+      }
+    }, { passive: true });
+
+    // 2. Scrollbar dragging and keyboard navigation (when mouse wheel is not active)
+    let lastScrollY = window.scrollY || (document.scrollingElement && document.scrollingElement.scrollTop) || 0;
+
+    window.addEventListener('scroll', (e) => {
+      if (this.muted) return;
+      const now = performance.now();
+
+      // If wheel event already handled this motion, skip to avoid double triggering
+      if (now - this.lastWheelTime < 100) {
+        lastScrollY = window.scrollY || (document.scrollingElement && document.scrollingElement.scrollTop) || 0;
+        return;
+      }
+
+      const docEl = document.scrollingElement || document.documentElement;
+      const maxScrollY = docEl ? Math.max(0, docEl.scrollHeight - window.innerHeight) : 0;
+      const curY = window.scrollY || (docEl && docEl.scrollTop) || 0;
+      const clampedY = Math.min(maxScrollY, Math.max(0, curY));
+
+      const diff = clampedY - lastScrollY;
+      lastScrollY = clampedY;
+
+      if (Math.abs(diff) >= 20) {
+        this.playScrollClick(diff > 0 ? 1 : -1);
+      }
+    }, { passive: true, capture: true });
   }
 
   // Delegated click listener ensures every button/link/interactive control clicks crisply
