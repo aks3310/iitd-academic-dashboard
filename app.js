@@ -1412,9 +1412,15 @@ class AcademicRunnerApp {
   bindEvents() {
     // Target Slider and Inputs
     const targetSlider = document.getElementById('targetScoreSlider');
+    let lastTargetVal = targetSlider ? parseFloat(targetSlider.value) : 85;
     if (targetSlider) {
       targetSlider.addEventListener('input', (e) => {
-        this.updateTargetScore(e.target.value);
+        const val = parseFloat(e.target.value);
+        if (Math.abs(val - lastTargetVal) >= 1) {
+          window.sfx.playScrollClick(val > lastTargetVal ? 1 : -1);
+          lastTargetVal = val;
+        }
+        this.updateTargetScore(val);
       });
     }
 
@@ -1559,6 +1565,11 @@ class AcademicRunnerApp {
         const simId = e.target.dataset.simId;
         const weight = parseFloat(e.target.dataset.itemWeight);
         const val = parseFloat(e.target.value);
+        const prevVal = e.target._lastVal !== undefined ? e.target._lastVal : val;
+        if (Math.abs(val - prevVal) >= 1) {
+          window.sfx.playScrollClick(val > prevVal ? 1 : -1);
+          e.target._lastVal = val;
+        }
         this.simulatedValues[simId] = val;
 
         const valDisplay = document.getElementById(`simVal-${simId}`);
