@@ -17,25 +17,29 @@
   <div class="tech-grid-bg" aria-hidden="true"></div>
 
   <!-- Top Tactical Navigation Bar -->
+  <!-- Top Tactical Navigation Bar -->
   <header class="top-nav">
     <div class="brand-section">
-      <div class="brand-logo-badge" title="Bungie Marathon Inspired Design">
+      <div class="brand-logo-badge" title="Bungie Marathon Design Architecture">
         <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="30" cy="30" r="28" fill="none" stroke="currentColor" stroke-width="4"/>
+          <circle cx="30" cy="30" r="28" fill="none" stroke="currentColor" stroke-width="5"/>
           <path d="M30 18C23.4 18 18 23.5 18 30.1C18 36.1 22.5 41 28.4 41.8V34.4C25 33.6 22.5 30.6 22.5 27C22.5 22.9 25.9 19.5 30 19.5C34.1 19.5 37.5 22.9 37.5 27C37.5 30.6 35 33.6 31.6 34.4V41.8C37.5 41 42 36.1 42 30C42 23.4 36.6 18 30 18Z" fill="currentColor"/>
         </svg>
         <span>RUNNER // IITD</span>
       </div>
 
       <div class="brand-telemetry">
-        <div class="sys-id">SYS.TELEMETRY.ACAD // 2026.SEM1</div>
-        <div class="campus-tag">LOC: 28.5450° N, 77.1926° E • HAUZ KHAS</div>
+        <div class="sys-id">
+          <span class="pulse-indicator"></span>
+          <span>SYS.TELEMETRY.ACAD // 2026.SEM1 [LIVE]</span>
+        </div>
+        <div class="campus-tag">LOC: 28.5450° N, 77.1926° E • HAUZ KHAS // TRK-01</div>
       </div>
     </div>
 
     <div class="nav-actions">
-      <!-- Live Clock -->
-      <div id="liveClock" style="font-family:var(--font-mono);font-size:11px;color:var(--text-mid);letter-spacing:0.1em;">--:--:-- IST</div>
+      <!-- Live Clock in Mono Brackets -->
+      <div id="liveClock" style="font-family:var(--font-mono);font-size:11px;color:var(--neon-volt);letter-spacing:0.1em;background:rgba(204,255,0,0.06);padding:4px 8px;border:1px solid rgba(204,255,0,0.2);">[ --:--:-- IST ]</div>
 
       <!-- Sound FX Toggle -->
       <button class="tactical-btn" id="soundToggleBtn" title="Toggle Synthesizer Sound Effects">
@@ -87,13 +91,20 @@
     <!-- SECTION 1: HOME COCKPIT OVERVIEW (SEMESTER DASHBOARD)   -->
     <!-- ======================================================== -->
     <div id="homeCockpitSection" class="home-cockpit-view" style="display:none;">
-      <!-- Semester Cockpit Header Banner -->
-      <section class="home-cockpit-banner">
+      <!-- Semester Cockpit Header Banner with Hazard Motif and Corner Crosshairs -->
+      <section class="home-cockpit-banner tactical-card-corners">
+        <div class="hazard-stripe-strip" style="position:absolute;top:0;left:0;right:0;" aria-hidden="true"></div>
+        <span class="hud-corner-crosshair tl"></span>
+        <span class="hud-corner-crosshair tr"></span>
+        <span class="hud-corner-crosshair bl"></span>
+        <span class="hud-corner-crosshair br"></span>
+
         <div class="banner-left">
           <div class="banner-meta-line">
             <span class="meta-pill">MISSION CONTROL</span>
             <span>INDIAN INSTITUTE OF TECHNOLOGY DELHI</span>
-            <span>// FIRST YEAR CURRICULUM</span>
+            <span>// CLASS OF 2028</span>
+            <span style="color:var(--neon-volt)">SN-IITD-ACAD-2026</span>
           </div>
           <h1 class="subject-title">
             <span class="subject-code-tag">ACADEMIC RADAR</span>
@@ -179,13 +190,20 @@
     <!-- ======================================================== -->
     <div id="singleCourseSection" class="single-course-view">
 
-    <!-- Header Subject Telemetry Banner -->
-    <section class="subject-telemetry-banner">
+    <!-- Header Subject Telemetry Banner with Hazard Strip & Crosshairs -->
+    <section class="subject-telemetry-banner tactical-card-corners">
+      <div class="hazard-stripe-strip" style="position:absolute;top:0;left:0;right:0;" aria-hidden="true"></div>
+      <span class="hud-corner-crosshair tl"></span>
+      <span class="hud-corner-crosshair tr"></span>
+      <span class="hud-corner-crosshair bl"></span>
+      <span class="hud-corner-crosshair br"></span>
+
       <div class="banner-left">
         <div class="banner-meta-line">
           <span class="meta-pill">COURSE FILE</span>
           <span>INDIAN INSTITUTE OF TECHNOLOGY DELHI</span>
           <span>// FIRST YEAR CURRICULUM</span>
+          <span style="color:var(--neon-volt)">LOC: HAUZ KHAS</span>
         </div>
         <h1 class="subject-title">
           <span class="subject-code-tag" id="subjectCodeDisplay">CML1001</span>
@@ -214,7 +232,7 @@
             <div class="target-display-value" id="targetDisplayValue">85.0%</div>
           </div>
           <!-- Quick Target Presets -->
-          <div style="display:flex;gap:6px;margin-top:4px;">
+          <div class="target-presets-row">
             <button class="preset-pill-btn preset-target-btn" data-target="80">80%</button>
             <button class="preset-pill-btn preset-target-btn" data-target="85">85%</button>
             <button class="preset-pill-btn preset-target-btn" data-target="90">90%</button>
@@ -227,11 +245,11 @@
     <!-- CORE TELEMETRY ENGINE: MARGIN HERO HUD CARD & STATS -->
     <section class="margin-hero-hud">
       <!-- Left: Massive Margin Buffer Readout -->
-      <div class="margin-gauge-card">
-        <div class="hud-corner-marker tl"></div>
-        <div class="hud-corner-marker tr"></div>
-        <div class="hud-corner-marker bl"></div>
-        <div class="hud-corner-marker br"></div>
+      <div class="margin-gauge-card tactical-card-corners">
+        <span class="hud-corner-crosshair tl"></span>
+        <span class="hud-corner-crosshair tr"></span>
+        <span class="hud-corner-crosshair bl"></span>
+        <span class="hud-corner-crosshair br"></span>
 
         <div class="margin-gauge-header">
           <div class="gauge-title">ERROR MARGIN REMAINING</div>
@@ -310,7 +328,7 @@
         </svg>
         <span>COURSE ASSESSMENT ROSTER & MARKS ENTRY</span>
       </div>
-      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <div class="section-header-badges">
         <div class="unfilled-assumption-indicator" title="Baseline setting: All unfilled marks are initially assumed to be 100% full marks">
           <span class="indicator-dot"></span>
           <span>UNFILLED: ASSUMED FULL</span>
@@ -341,7 +359,7 @@
           <div style="width:8px;height:8px;background:var(--neon-cyan);box-shadow:0 0 8px var(--neon-cyan);"></div>
           <h2 class="simulator-title">// "WHAT-IF" PERFORMANCE SIMULATOR</h2>
         </div>
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <div class="sim-presets-group">
           <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);">QUICK SIM:</span>
           <button class="preset-pill-btn sim-preset-btn" data-sim-val="100">100% (FULL)</button>
           <button class="preset-pill-btn sim-preset-btn" data-sim-val="target">TARGET</button>
@@ -370,7 +388,58 @@
 
   </main>
 
-  <!-- ADD SUBJECT MODAL DIALOG -->
+  <!-- BUNGIE MARATHON AUTHENTIC 4-COLUMN WIREFRAME FOOTER -->
+  <footer class="tactical-marathon-footer">
+    <div class="footer-wireframe-grid">
+      <!-- Cell 1: Telemetry Identification & Barcode -->
+      <div class="footer-grid-cell cell-id">
+        <div class="footer-brand-header">
+          <div class="footer-volt-square"></div>
+          <span class="footer-brand-title">MARATHON // IITD TELEMETRY</span>
+        </div>
+        <div class="footer-barcode">|||||||| | ||||| |||| || ||||||||| | ||||</div>
+        <div class="footer-meta-text">
+          RUNNER ACADEMIC MARGIN TRACKER<br>
+          FIRST YEAR CURRICULUM SPEC // 2024-2028<br>
+          HAUZ KHAS, NEW DELHI — 110016
+        </div>
+        <div class="footer-serial">SN-IITD-ACAD-2026-X99 // SEC-04</div>
+      </div>
+
+      <!-- Cell 2: Academic Runner Lore Directive -->
+      <div class="footer-grid-cell cell-quote">
+        <div class="footer-cell-tag">// DIRECTIVE 01</div>
+        <blockquote class="runner-quote">
+          "10.00 SGPA IS NOT A DESTINATION. IT IS A TRAJECTORY. THE MARGIN FOR ERROR IS NARROW, BUT THE VECTOR IS YOURS TO COMMAND. RUN THE CURVE."
+        </blockquote>
+        <div class="quote-sub">// IITD RUNNER PROTOCOL // CLASS OF 2028 // AUTONOMOUS HUD</div>
+      </div>
+
+      <!-- Cell 3: 45° Hazard Warning Stripes Tile -->
+      <div class="footer-grid-cell cell-hazard">
+        <div class="hazard-stripe-tile"></div>
+        <div class="hazard-overlay-label">SEC.04 // HAZARD WARNING</div>
+      </div>
+
+      <!-- Cell 4: Tactical Relays / Links -->
+      <div class="footer-grid-cell cell-relays">
+        <div class="footer-cell-tag">// TACTICAL RELAYS</div>
+        <ul class="footer-relays-list">
+          <li><a href="https://academics.iitd.ac.in" target="_blank" rel="noopener">[↗] IITD ERP ACADEMICS</a></li>
+          <li><a href="https://moodle.iitd.ac.in" target="_blank" rel="noopener">[↗] MOODLE LMS PORTAL</a></li>
+          <li><a href="https://home.iitd.ac.in/academic-calendar.php" target="_blank" rel="noopener">[↗] ACADEMIC CALENDAR</a></li>
+          <li><button type="button" id="footerResetTrigger" class="footer-purge-btn">[!] SYSTEM PURGE & RESET</button></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Sub-Footer Metadata Line -->
+    <div class="footer-sub-bar">
+      <span>BUNGIE MARATHON AESTHETICS APPLIED TO IIT DELHI FIRST-YEAR CURRICULUM</span>
+      <span>STATUS: SYSTEM NOMINAL • 144.200 MHz</span>
+      <span>LOCAL TELEMETRY STORAGE: ACTIVE</span>
+    </div>
+  </footer>
   <div class="modal-overlay" id="addCourseModal">
     <div class="modal-window">
       <div class="modal-header">
@@ -399,7 +468,7 @@
           <input type="text" id="newCourseTitle" class="form-input" placeholder="e.g. Chemistry Laboratory" required />
         </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="form-row-2col">
           <div class="form-row">
             <label class="form-label" for="newCourseCredits">Credits</label>
             <input type="number" id="newCourseCredits" class="form-input" min="1" max="6" value="2" required />
@@ -411,7 +480,7 @@
           </div>
         </div>
 
-        <div style="margin-top:20px;display:flex;justify-content:flex-end;gap:12px;">
+        <div class="modal-footer-actions">
           <button type="button" class="tactical-btn" onclick="document.getElementById('addCourseModal').classList.remove('active')">CANCEL</button>
           <button type="submit" class="tactical-btn primary">INITIALIZE SUBJECT</button>
         </div>
@@ -433,7 +502,7 @@
           <input type="text" id="newComponentName" class="form-input" placeholder="e.g. Pre-Lab Quizzes, Lab Continuous Evaluation, Term Project" required />
         </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="form-row-2col">
           <div class="form-row">
             <label class="form-label" for="newComponentWeight">Weightage (%)</label>
             <input type="number" id="newComponentWeight" class="form-input" min="1" max="100" step="0.5" value="15" required />
@@ -450,14 +519,14 @@
           <input type="text" id="newComponentDate" class="form-input" placeholder="e.g. Weekly Lab Sessions, or 15 Nov" value="Throughout Semester" />
         </div>
 
-        <div class="form-row" style="display:flex;align-items:center;gap:10px;margin-top:12px;background:var(--bg-surface-2);padding:10px;clip-path:var(--chamfer-sm);">
+        <div class="form-row modal-checkbox-row">
           <input type="checkbox" id="newComponentHasSubs" style="accent-color:var(--neon-volt);width:18px;height:18px;cursor:pointer;" />
           <label for="newComponentHasSubs" style="font-family:var(--font-mono);font-size:12px;color:#fff;cursor:pointer;">
             Enable Detailed Subsections / Sub-Quizzes (e.g. Pre-Lab 1, Pre-Lab 2, etc.)
           </label>
         </div>
 
-        <div style="margin-top:20px;display:flex;justify-content:flex-end;gap:12px;">
+        <div class="modal-footer-actions">
           <button type="button" class="tactical-btn" onclick="document.getElementById('addComponentModal').classList.remove('active')">CANCEL</button>
           <button type="submit" class="tactical-btn primary">CREATE COMPONENT</button>
         </div>
@@ -485,7 +554,7 @@
           <input type="text" id="editComponentDate" class="form-input" required />
         </div>
 
-        <div style="margin-top:20px;display:flex;justify-content:flex-end;gap:12px;">
+        <div class="modal-footer-actions">
           <button type="button" class="tactical-btn" onclick="document.getElementById('editComponentModal').classList.remove('active')">CANCEL</button>
           <button type="submit" class="tactical-btn primary">SAVE CHANGES</button>
         </div>

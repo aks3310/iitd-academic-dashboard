@@ -1,74 +1,92 @@
 /* ==========================================================================
    MARATHON // IIT DELHI ACADEMIC TELEMETRY HUD DESIGN SYSTEM
-   Inspired by Bungie's Marathon (2025/2026) Design Language
-   Palette: Acid Volt (#E5FE00), Cyber Crimson (#FF1E56), Cyan (#00F0FF), Void Black (#08090C)
+   Authentic Bungie Marathon (2025/2026) Design Language
+   Palette: Acid Volt (#CCFF00), Nightfall Violet (#6B00FF), Cyber Crimson (#FF1E56), Cyan (#00F0FF), Void Black (#000000)
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,400;0,600;0,700;1,700&family=JetBrains+Mono:wght@400;500;700;800&family=Space+Grotesk:wght@400;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;0,800;1,400&family=Space+Grotesk:wght@400;500;600;700;800&family=Chakra+Petch:ital,wght@0,400;0,600;0,700;1,700&display=swap');
 
 :root {
-  /* Colors */
-  --bg-void: #07080b;
-  --bg-surface-1: #0d1017;
-  --bg-surface-2: #121620;
-  --bg-surface-3: #181d2a;
-  --bg-highlight: #21293b;
+  /* Authentic Bungie Marathon Color Palette */
+  --bg-void: #000000;
+  --bg-surface-1: #07090e;
+  --bg-surface-2: #0d1119;
+  --bg-surface-3: #131926;
+  --bg-highlight: #1b2335;
 
-  --neon-volt: #e5fe00;
-  --neon-volt-dim: rgba(229, 254, 0, 0.15);
-  --neon-volt-glow: rgba(229, 254, 0, 0.4);
+  /* Primary High-Voltage Acid Volt */
+  --neon-volt: #ccff00;
+  --neon-volt-dim: rgba(204, 255, 0, 0.12);
+  --neon-volt-glow: rgba(204, 255, 0, 0.4);
 
+  /* Season 2 Nightfall Violet */
+  --neon-violet: #6b00ff;
+  --neon-violet-dim: rgba(107, 0, 255, 0.18);
+  --neon-violet-glow: rgba(107, 0, 255, 0.45);
+
+  /* Cyber Alert Crimson */
   --neon-crimson: #ff1e56;
   --neon-crimson-dim: rgba(255, 30, 86, 0.15);
   --neon-crimson-glow: rgba(255, 30, 86, 0.4);
 
+  /* Tactical Cyan & Amber */
   --neon-cyan: #00f0ff;
   --neon-cyan-dim: rgba(0, 240, 255, 0.15);
-
   --neon-amber: #ffaa00;
   --neon-amber-dim: rgba(255, 170, 0, 0.15);
 
+  /* High-Contrast Telemetry Typography Colors */
   --text-pure: #ffffff;
-  --text-high: #f0f4fc;
+  --text-high: #f2f5fb;
   --text-mid: #94a3b8;
-  --text-muted: #526075;
-  --text-disabled: #323b49;
+  --text-muted: #536277;
+  --text-disabled: #2d3644;
 
-  --border-subtle: #1c2230;
-  --border-mid: #2c364c;
-  --border-bright: #455573;
+  /* Architectural Wireframe Borders */
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-mid: #1d2537;
+  --border-bright: #313f59;
   --border-neon: var(--neon-volt);
+  --border-violet: var(--neon-violet);
 
-  /* Fonts */
-  --font-display: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-tech: 'Chakra Petch', sans-serif;
+  /* Typography Stack: Orbitron for Display, JetBrains Mono for Telemetry */
+  --font-display: 'Orbitron', 'Space Grotesk', -apple-system, sans-serif;
+  --font-body: 'Space Grotesk', -apple-system, sans-serif;
+  --font-tech: 'Orbitron', 'Chakra Petch', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  /* Layout */
-  --chamfer-sm: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 0 100%);
-  --chamfer-md: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
-  --chamfer-lg: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
-  --chamfer-top: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
-  --chamfer-bot-r: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
+  /* Architectural Sharp Geometry (Zero Border-Radius) */
+  --chamfer-sm: none;
+  --chamfer-md: none;
+  --chamfer-lg: none;
+  --chamfer-top: none;
+  --chamfer-bot-r: none;
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  border-radius: 0 !important;
 }
 
 html, body {
   background-color: var(--bg-void);
   color: var(--text-high);
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   min-height: 100vh;
   overflow-x: hidden;
   position: relative;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Subtle CRT scanline overlay */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Authentic CRT scanline overlay */
 body::before {
   content: "";
   position: fixed;
@@ -78,33 +96,102 @@ body::before {
   height: 100%;
   background: linear-gradient(
     rgba(18, 16, 16, 0) 50%, 
-    rgba(0, 0, 0, 0.22) 50%
+    rgba(0, 0, 0, 0.28) 50%
   ), linear-gradient(
     90deg,
-    rgba(255, 0, 0, 0.015),
-    rgba(0, 255, 0, 0.01),
-    rgba(0, 0, 255, 0.015)
+    rgba(204, 255, 0, 0.015),
+    rgba(0, 0, 0, 0.01),
+    rgba(107, 0, 255, 0.015)
   );
   background-size: 100% 3px, 6px 100%;
   pointer-events: none;
   z-index: 9999;
-  opacity: 0.7;
+  opacity: 0.65;
 }
 
-/* Tech Grid Background */
+/* Marathon Blueprint Architectural Grid */
 .tech-grid-bg {
   position: fixed;
   inset: 0;
   background-image: 
-    radial-gradient(circle at 50% 10%, rgba(229, 254, 0, 0.04) 0%, transparent 60%),
-    linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-  background-size: 100% 100%, 48px 48px, 48px 48px;
+    radial-gradient(circle at 50% 0%, rgba(204, 255, 0, 0.06) 0%, transparent 60%),
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 100% 100%, 40px 40px, 40px 40px;
   pointer-events: none;
   z-index: 0;
 }
 
-/* Top Navigation Bar */
+/* ==========================================================================
+   EXTENDING CORNER CROSSHAIR SYSTEM & HAZARD STRIPES
+   ========================================================================== */
+.tactical-card-corners {
+  position: relative;
+}
+
+.hud-corner-crosshair {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  pointer-events: none;
+  z-index: 6;
+}
+
+.hud-corner-crosshair.tl {
+  top: -2px;
+  left: -2px;
+  border-top: 2px solid var(--neon-volt);
+  border-left: 2px solid var(--neon-volt);
+}
+
+.hud-corner-crosshair.tr {
+  top: -2px;
+  right: -2px;
+  border-top: 2px solid var(--neon-volt);
+  border-right: 2px solid var(--neon-volt);
+}
+
+.hud-corner-crosshair.bl {
+  bottom: -2px;
+  left: -2px;
+  border-bottom: 2px solid var(--neon-volt);
+  border-left: 2px solid var(--neon-volt);
+}
+
+.hud-corner-crosshair.br {
+  bottom: -2px;
+  right: -2px;
+  border-bottom: 2px solid var(--neon-volt);
+  border-right: 2px solid var(--neon-volt);
+}
+
+/* Alternating 45-degree Hazard Stripes */
+.hazard-stripe-strip {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--neon-volt),
+    var(--neon-volt) 10px,
+    #000000 10px,
+    #000000 20px
+  );
+  height: 6px;
+  width: 100%;
+}
+
+.hazard-stripe-tile {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--neon-volt),
+    var(--neon-volt) 12px,
+    #000000 12px,
+    #000000 24px
+  );
+  width: 100%;
+  height: 100%;
+  min-height: 80px;
+}
+
+/* Top Tactical Navigation Bar */
 .top-nav {
   position: sticky;
   top: 0;
@@ -112,10 +199,10 @@ body::before {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 60px;
+  height: 64px;
   padding: 0 24px;
-  background: rgba(7, 8, 11, 0.94);
-  backdrop-filter: blur(12px);
+  background: rgba(0, 0, 0, 0.94);
+  backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--border-mid);
 }
 
@@ -127,28 +214,30 @@ body::before {
 
 .brand-logo-badge {
   background: var(--neon-volt);
-  color: #000;
-  font-family: var(--font-tech);
-  font-weight: 800;
+  color: #000000;
+  font-family: var(--font-display);
+  font-weight: 900;
   font-size: 13px;
-  letter-spacing: 0.14em;
-  padding: 6px 12px;
+  letter-spacing: 0.16em;
+  padding: 8px 14px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  clip-path: var(--chamfer-sm);
+  gap: 10px;
   text-transform: uppercase;
+  border: 1px solid var(--neon-volt);
+  box-shadow: 0 0 16px var(--neon-volt-glow);
 }
 
 .brand-logo-badge svg {
-  width: 14px;
-  height: 14px;
-  fill: currentColor;
+  width: 16px;
+  height: 16px;
+  fill: #000000;
 }
 
 .brand-telemetry {
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 
 .brand-telemetry .sys-id {
@@ -156,34 +245,51 @@ body::before {
   font-size: 11px;
   font-weight: 700;
   color: var(--neon-volt);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pulse-indicator {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: var(--neon-volt);
+  box-shadow: 0 0 8px var(--neon-volt);
+  animation: pulseNeon 2s infinite ease-in-out;
+}
+
+@keyframes pulseNeon {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
 }
 
 .brand-telemetry .campus-tag {
   font-family: var(--font-mono);
   font-size: 9px;
   color: var(--text-muted);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
 }
 
 .nav-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
+/* Tactical Action Buttons */
 .tactical-btn {
   background: var(--bg-surface-2);
-  border: 1px solid var(--border-mid);
+  border: 1px solid var(--border-bright);
   color: var(--text-high);
-  font-family: var(--font-tech);
-  font-size: 12px;
+  font-family: var(--font-display);
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.1em;
-  padding: 8px 16px;
+  letter-spacing: 0.12em;
+  padding: 9px 16px;
   cursor: pointer;
-  transition: all 0.15s ease;
-  clip-path: var(--chamfer-sm);
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   text-transform: uppercase;
   display: inline-flex;
   align-items: center;
@@ -191,27 +297,34 @@ body::before {
 }
 
 .tactical-btn:hover {
-  background: var(--neon-volt);
+  background: var(--bg-surface-3);
   border-color: var(--neon-volt);
-  color: #000;
-  box-shadow: 0 0 15px var(--neon-volt-glow);
+  color: var(--neon-volt);
+  box-shadow: 0 0 14px var(--neon-volt-dim);
   transform: translateY(-1px);
 }
 
 .tactical-btn:hover svg {
-  stroke: #000;
+  stroke: var(--neon-volt);
 }
 
 .tactical-btn.primary {
   background: var(--neon-volt);
-  border-color: var(--neon-volt);
-  color: #000;
+  border: 1px solid var(--neon-volt);
+  color: #000000;
+  font-weight: 900;
+  box-shadow: 0 0 14px var(--neon-volt-dim);
 }
 
 .tactical-btn.primary:hover {
-  background: #f0ff4f;
-  box-shadow: 0 0 15px var(--neon-volt-glow);
-  color: #000;
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #000000;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.6);
+}
+
+.tactical-btn.primary:hover svg {
+  stroke: #000000;
 }
 
 .tactical-btn.danger {
@@ -222,19 +335,19 @@ body::before {
 
 .tactical-btn.danger:hover {
   background: var(--neon-crimson);
-  color: #fff;
+  color: #ffffff;
   border-color: var(--neon-crimson);
   box-shadow: 0 0 15px var(--neon-crimson-glow);
 }
 
 .tactical-btn.danger:hover svg {
-  stroke: #fff;
+  stroke: #ffffff;
 }
 
 .modal-window .tactical-btn:not(.primary):hover {
   background: var(--bg-surface-3);
   border-color: var(--text-mid);
-  color: #fff;
+  color: #ffffff;
   box-shadow: none;
   transform: none;
 }
@@ -247,9 +360,9 @@ body::before {
 .main-wrapper {
   position: relative;
   z-index: 10;
-  max-width: 1380px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 24px 20px 80px;
+  padding: 24px 24px 80px;
 }
 
 /* Course Switcher Ribbon */
@@ -259,7 +372,7 @@ body::before {
   justify-content: space-between;
   margin-bottom: 24px;
   border-bottom: 1px solid var(--border-subtle);
-  padding-bottom: 12px;
+  padding-bottom: 14px;
   flex-wrap: wrap;
   gap: 12px;
 }
@@ -276,30 +389,42 @@ body::before {
   background: var(--bg-surface-1);
   border: 1px solid var(--border-mid);
   color: var(--text-mid);
-  font-family: var(--font-tech);
-  font-size: 13px;
+  font-family: var(--font-display);
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  padding: 10px 18px;
+  letter-spacing: 0.1em;
+  padding: 10px 16px;
   cursor: pointer;
-  clip-path: var(--chamfer-sm);
   display: flex;
   align-items: center;
   gap: 10px;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-transform: uppercase;
 }
 
 .course-tab-item:hover {
   border-color: var(--text-mid);
-  color: #fff;
+  color: #ffffff;
   background: var(--bg-surface-2);
 }
 
+/* Active Course Tab: Season 2 Nightfall Violet */
 .course-tab-item.active {
+  background: rgba(107, 0, 255, 0.18);
+  border: 1px solid var(--neon-violet);
+  color: #ffffff;
+  box-shadow: inset 0 2px 0 0 var(--neon-volt), 0 0 16px var(--neon-violet-dim);
+}
+
+.course-tab-item.home-tab.active {
   background: var(--bg-surface-2);
   border-color: var(--neon-volt);
   color: var(--neon-volt);
-  box-shadow: inset 0 2px 0 0 var(--neon-volt);
+  box-shadow: inset 0 2px 0 0 var(--neon-volt), 0 0 14px var(--neon-volt-dim);
+}
+
+.course-tab-item.home-tab.active svg {
+  stroke: var(--neon-volt);
 }
 
 .course-tab-item .tab-credits {
@@ -307,28 +432,29 @@ body::before {
   font-size: 10px;
   padding: 2px 6px;
   background: rgba(255, 255, 255, 0.06);
-  border-radius: 2px;
   color: var(--text-muted);
 }
 
 .course-tab-item.active .tab-credits {
-  background: var(--neon-volt-dim);
-  color: var(--neon-volt);
+  background: var(--neon-volt);
+  color: #000000;
+  font-weight: 800;
 }
 
 .course-tab-item .tab-delete-btn {
-  opacity: 0.3;
-  transition: opacity 0.15s;
+  opacity: 0.35;
+  transition: opacity 0.15s, color 0.15s;
   background: transparent;
   border: none;
   color: inherit;
   cursor: pointer;
   display: flex;
   align-items: center;
+  padding: 2px;
 }
 
 .course-tab-item:hover .tab-delete-btn {
-  opacity: 0.8;
+  opacity: 0.85;
 }
 
 .course-tab-item .tab-delete-btn:hover {
@@ -1329,6 +1455,49 @@ body::before {
   margin-bottom: 16px;
 }
 
+.form-row-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.modal-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  background: var(--bg-surface-2);
+  padding: 10px;
+  clip-path: var(--chamfer-sm);
+}
+
+.modal-footer-actions {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.target-presets-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.section-header-badges {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.sim-presets-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .form-label {
   display: block;
   font-family: var(--font-mono);
@@ -1631,38 +1800,7 @@ body::before {
   transform: translateY(-1px);
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .top-nav {
-    padding: 0 16px;
-    height: auto;
-    padding-top: 10px;
-    padding-bottom: 10px;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-  .subject-telemetry-banner {
-    grid-template-columns: 1fr;
-    padding: 18px;
-  }
-  .banner-right {
-    align-items: flex-start;
-  }
-  .target-selector-box {
-    align-items: flex-start;
-    width: 100%;
-  }
-  .target-controls {
-    width: 100%;
-    justify-content: space-between;
-  }
-  .target-slider {
-    flex: 1;
-  }
-  .telemetry-stats-grid {
-    grid-template-columns: 1fr;
-  }
-}
+
 
 /* ======================================================== */
 /* HOME COCKPIT OVERVIEW STYLES                             */
@@ -1724,22 +1862,10 @@ body::before {
   }
 }
 
-@media (max-width: 600px) {
-  .home-global-stats-hud {
-    grid-template-columns: 1fr;
-  }
-}
-
 .home-subjects-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr));
   gap: 20px;
-}
-
-@media (max-width: 600px) {
-  .home-subjects-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 .home-subject-card {
@@ -1929,9 +2055,8 @@ body::before {
 }
 
 .home-add-card {
-  background: rgba(0, 0, 0, 0.3);
-  border: 2px dashed var(--border-mid);
-  clip-path: var(--chamfer-md);
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px dashed var(--border-bright);
   padding: 32px 20px;
   display: flex;
   flex-direction: column;
@@ -1940,40 +2065,43 @@ body::before {
   text-align: center;
   cursor: pointer;
   min-height: 280px;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   gap: 12px;
+  position: relative;
 }
 
 .home-add-card:hover {
   border-color: var(--neon-volt);
-  background: rgba(229, 254, 0, 0.03);
+  background: rgba(204, 255, 0, 0.04);
+  box-shadow: 0 0 20px var(--neon-volt-dim);
   transform: translateY(-2px);
 }
 
 .home-add-card-icon {
   width: 44px;
   height: 44px;
-  border-radius: 50%;
   border: 1px solid var(--border-bright);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--neon-volt);
   background: var(--bg-surface-2);
+  transition: all 0.2s ease;
 }
 
 .home-add-card:hover .home-add-card-icon {
   background: var(--neon-volt);
-  color: #000;
+  color: #000000;
+  border-color: var(--neon-volt);
   box-shadow: 0 0 15px var(--neon-volt-glow);
 }
 
 .home-add-card-title {
-  font-family: var(--font-tech);
-  font-size: 14px;
-  font-weight: 700;
-  color: #fff;
-  letter-spacing: 0.1em;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
@@ -1982,4 +2110,881 @@ body::before {
   font-size: 11px;
   color: var(--text-muted);
   max-width: 240px;
+  line-height: 1.4;
+}
+
+/* ==========================================================================
+   AUTHENTIC BUNGIE MARATHON WIREFRAME FOOTER (4-COLUMN GRID)
+   ========================================================================== */
+.tactical-marathon-footer {
+  position: relative;
+  z-index: 10;
+  max-width: 1400px;
+  margin: 50px auto 0;
+  padding: 0 0 40px;
+  border-top: 1px solid var(--border-mid);
+  padding-top: 28px;
+}
+
+.footer-wireframe-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1.6fr 0.8fr 1.2fr;
+  gap: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #000000;
+  position: relative;
+}
+
+.footer-grid-cell {
+  padding: 24px 22px;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  background: #000000;
+}
+
+.footer-grid-cell:last-child {
+  border-right: none;
+}
+
+.footer-brand-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.footer-volt-square {
+  width: 14px;
+  height: 14px;
+  background: var(--neon-volt);
+  box-shadow: 0 0 10px var(--neon-volt-glow);
+}
+
+.footer-brand-title {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  color: #ffffff;
+}
+
+.footer-barcode {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.26em;
+  color: var(--neon-volt);
+  margin-bottom: 12px;
+  user-select: none;
+}
+
+.footer-meta-text {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  letter-spacing: 0.08em;
+  margin-bottom: 14px;
+}
+
+.footer-serial {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--neon-cyan);
+  letter-spacing: 0.12em;
+}
+
+/* Quote Cell */
+.footer-cell-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--neon-volt);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.runner-quote {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: #ffffff;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-left: 2px solid var(--neon-violet);
+  padding-left: 14px;
+  margin-bottom: 14px;
+}
+
+.quote-sub {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--text-muted);
+  letter-spacing: 0.12em;
+}
+
+/* Hazard Cell */
+.cell-hazard {
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+  min-height: 140px;
+}
+
+.hazard-overlay-label {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: #000000;
+  color: var(--neon-volt);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 3px 8px;
+  letter-spacing: 0.12em;
+  border: 1px solid var(--neon-volt);
+}
+
+/* Relays Cell */
+.footer-relays-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.footer-relays-list a,
+.footer-purge-btn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text-mid);
+  text-decoration: none;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+
+.footer-relays-list a:hover {
+  color: var(--neon-volt);
+  transform: translateX(3px);
+}
+
+.footer-purge-btn {
+  color: var(--neon-crimson);
+  margin-top: 4px;
+}
+
+.footer-purge-btn:hover {
+  color: #ffffff;
+  text-shadow: 0 0 10px var(--neon-crimson);
+}
+
+/* Bottom Sub-Footer Bar */
+.footer-sub-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 4px 0;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* ======================================================== */
+/* COMPREHENSIVE RESPONSIVE MEDIA QUERIES                   */
+/* Mobile, Tablet & Touchscreen Device Optimization         */
+/* ======================================================== */
+
+/* --------------------------------------------------------
+   1. TABLETS & MID-SIZE SCREENS (<= 992px)
+   -------------------------------------------------------- */
+@media (max-width: 992px) {
+  .margin-hero-hud {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .home-subjects-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr));
+    gap: 16px;
+  }
+
+  .simulator-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .footer-wireframe-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .footer-grid-cell {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .footer-grid-cell:nth-child(2) {
+    border-right: none;
+  }
+}
+
+/* --------------------------------------------------------
+   2. MOBILE LANDSCAPE & SMALL TABLETS (<= 768px)
+   -------------------------------------------------------- */
+@media (max-width: 768px) {
+  /* Navigation */
+  .top-nav {
+    padding: 8px 14px;
+    height: auto;
+    min-height: 52px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .brand-section {
+    gap: 10px;
+    flex: 1 1 auto;
+  }
+
+  .brand-logo-badge {
+    font-size: 11px;
+    padding: 5px 8px;
+    letter-spacing: 0.1em;
+  }
+
+  .brand-logo-badge svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .brand-telemetry .sys-id {
+    font-size: 10px;
+  }
+
+  .brand-telemetry .campus-tag {
+    font-size: 8.5px;
+  }
+
+  .nav-actions {
+    gap: 6px;
+    margin-left: auto;
+  }
+
+  #liveClock {
+    font-size: 10px;
+  }
+
+  .tactical-btn {
+    padding: 7px 12px;
+    font-size: 11px;
+  }
+
+  .tactical-btn.icon-only {
+    padding: 7px 10px;
+    min-width: 34px;
+    min-height: 34px;
+    justify-content: center;
+  }
+
+  /* Main wrapper */
+  .main-wrapper {
+    padding: 16px 14px 60px;
+  }
+
+  /* Course tabs horizontal scroll ribbon */
+  .course-ribbon-bar {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+  }
+
+  .course-tabs-list {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    gap: 6px;
+    padding-bottom: 4px;
+    width: 100%;
+  }
+
+  .course-tabs-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .course-tab-item {
+    flex-shrink: 0;
+    white-space: nowrap;
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  #openAddCourseBtn {
+    width: 100%;
+    justify-content: center;
+    padding: 10px 14px;
+    min-height: 40px;
+  }
+
+  /* Home Cockpit Banner */
+  .home-cockpit-banner {
+    padding: 18px 16px;
+    margin-bottom: 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .home-cockpit-banner .banner-left {
+    width: 100%;
+  }
+
+  .home-cockpit-banner .banner-right {
+    width: 100%;
+  }
+
+  #homeAddCourseBtn {
+    width: 100%;
+    justify-content: center;
+    padding: 10px 14px;
+    min-height: 42px;
+  }
+
+  /* Subject Telemetry Banner */
+  .subject-telemetry-banner {
+    grid-template-columns: 1fr;
+    padding: 18px 16px;
+    margin-bottom: 18px;
+    gap: 16px;
+  }
+
+  .subject-title {
+    font-size: 22px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    word-break: break-word;
+  }
+
+  .subject-code-tag {
+    font-size: 26px;
+  }
+
+  .banner-right {
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .target-selector-box {
+    align-items: stretch;
+    width: 100%;
+    padding: 12px 14px;
+    gap: 8px;
+  }
+
+  .target-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .target-slider {
+    flex: 1;
+    height: 10px;
+  }
+
+  .target-presets-row {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .preset-target-btn {
+    flex: 1;
+    text-align: center;
+    padding: 6px 6px;
+    min-height: 32px;
+  }
+
+  /* Telemetry stats grid */
+  .telemetry-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  /* Home global stats HUD */
+  .home-global-stats-hud {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  /* Home subjects grid */
+  .home-subjects-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  /* Section header bar */
+  .section-header-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 28px 0 14px;
+  }
+
+  .section-title {
+    font-size: 14px;
+    line-height: 1.3;
+  }
+
+  .section-header-badges {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .unfilled-assumption-indicator,
+  .weight-allocation-badge,
+  .section-stats-summary {
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: flex-start;
+    font-size: 10px;
+  }
+
+  /* Assessment Card */
+  .assessment-card {
+    padding: 16px 14px;
+  }
+
+  .card-main-row {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .item-name {
+    font-size: 17px;
+  }
+
+  .card-actions-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
+    margin-top: 8px;
+  }
+
+  .card-action-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+    padding: 6px 10px;
+    min-height: 34px;
+    font-size: 10.5px;
+  }
+
+  .marks-input-group {
+    width: 100%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 8px;
+    background: var(--bg-surface-2);
+    padding: 10px 12px;
+    clip-path: var(--chamfer-sm);
+    border: 1px solid var(--border-mid);
+    box-sizing: border-box;
+  }
+
+  .marks-input-group .input-field-wrap {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .marks-number-input {
+    width: 100%;
+    font-size: 16px; /* Prevents auto-zoom on mobile Safari & Chrome */
+    min-height: 40px;
+    padding: 8px 10px;
+    box-sizing: border-box;
+  }
+
+  .marks-divider {
+    margin-top: 0;
+    align-self: center;
+    font-size: 18px;
+    padding: 0 4px;
+  }
+
+  .item-diagnostics {
+    width: 100%;
+    align-items: flex-start;
+    text-align: left;
+    border-top: 1px dashed var(--border-subtle);
+    padding-top: 10px;
+    margin-top: 4px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Tutorial Subsections Grid */
+  .tutorial-subgrid {
+    padding: 12px;
+  }
+
+  .tutorial-subgrid-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .tutorial-cards-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  /* What-If Simulator */
+  .simulator-box {
+    padding: 18px 16px;
+    margin-top: 24px;
+  }
+
+  .simulator-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .sim-presets-group {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .sim-preset-btn {
+    flex: 1 1 auto;
+    text-align: center;
+    padding: 6px 8px;
+    min-height: 32px;
+  }
+
+  .sim-slider-input {
+    height: 12px;
+  }
+
+  .sim-slider-input::-webkit-slider-thumb {
+    width: 22px;
+    height: 22px;
+  }
+
+  /* Modals */
+  .modal-overlay {
+    padding: 12px;
+  }
+
+  .modal-window {
+    padding: 20px 16px;
+    max-height: 88dvh;
+    width: 100%;
+  }
+
+  .modal-title {
+    font-size: 15px;
+  }
+
+  .form-input {
+    font-size: 16px; /* Prevents auto-zoom on mobile */
+  }
+
+  .modal-footer-actions {
+    flex-direction: column-reverse;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .modal-footer-actions .tactical-btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 42px;
+  }
+
+  /* Toast Notification */
+  .tactical-toast {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    max-width: calc(100% - 24px);
+    justify-content: center;
+    text-align: center;
+    transform: translateY(120px);
+  }
+
+  /* Wireframe Footer on Mobile / Small Tablets */
+  .tactical-marathon-footer {
+    padding: 24px 10px 30px;
+    margin-top: 36px;
+  }
+
+  .footer-wireframe-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-grid-cell {
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 18px 14px;
+  }
+
+  .footer-sub-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding-top: 14px;
+  }
+}
+
+/* --------------------------------------------------------
+   3. MOBILE PHONES (<= 540px)
+   -------------------------------------------------------- */
+@media (max-width: 540px) {
+  .top-nav {
+    padding: 6px 10px;
+  }
+
+  .brand-section {
+    gap: 8px;
+  }
+
+  .brand-logo-badge {
+    font-size: 10px;
+    padding: 4px 6px;
+    gap: 4px;
+  }
+
+  .brand-telemetry .sys-id {
+    font-size: 9px;
+  }
+
+  .brand-telemetry .campus-tag {
+    display: none; /* Hide to prevent vertical stretching of the navbar */
+  }
+
+  .nav-actions {
+    gap: 4px;
+  }
+
+  #liveClock {
+    display: none; /* Keep header compact on phones */
+  }
+
+  #soundToggleBtn span {
+    display: none; /* Icon only on phones */
+  }
+
+  #soundToggleBtn {
+    padding: 6px 8px;
+  }
+
+  .tactical-btn.icon-only {
+    padding: 6px 8px;
+  }
+
+  /* Main wrapper */
+  .main-wrapper {
+    padding: 10px 8px 50px;
+  }
+
+  /* Titles */
+  .subject-title {
+    font-size: 18px;
+  }
+
+  .subject-code-tag {
+    font-size: 22px;
+  }
+
+  /* Margin readout */
+  .margin-gauge-card {
+    padding: 16px 12px;
+  }
+
+  .margin-readout-huge {
+    font-size: 34px;
+  }
+
+  .margin-readout-caption {
+    font-size: 11.5px;
+  }
+
+  /* 2x2 Telemetry matrix on small phones */
+  .telemetry-stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .stat-cell {
+    padding: 10px 8px;
+  }
+
+  .stat-cell-top {
+    margin-bottom: 4px;
+  }
+
+  .stat-cell-label {
+    font-size: 8.5px;
+    letter-spacing: 0.06em;
+  }
+
+  .stat-cell-code {
+    display: none;
+  }
+
+  .stat-cell-val {
+    font-size: 18px;
+  }
+
+  .stat-cell-desc {
+    font-size: 9px;
+    line-height: 1.2;
+  }
+
+  /* Home stats HUD */
+  .home-global-stats-hud {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  /* Home Card */
+  .home-subject-card {
+    padding: 14px 12px;
+  }
+
+  .home-card-code {
+    font-size: 18px;
+  }
+
+  .home-margin-value {
+    font-size: 26px;
+  }
+
+  .home-card-stats-grid {
+    gap: 4px;
+  }
+
+  .home-stat-box {
+    padding: 6px 4px;
+  }
+
+  .home-stat-box-label {
+    font-size: 7.5px;
+  }
+
+  .home-stat-box-val {
+    font-size: 13px;
+  }
+
+  .home-stat-box-sub {
+    font-size: 7.5px;
+  }
+
+  /* Tutorial subgrid cards stack 1 column on phones */
+  .tutorial-cards-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .tut-mini-card {
+    padding: 8px 10px;
+  }
+
+  .tut-input {
+    font-size: 16px;
+    min-height: 36px;
+  }
+
+  /* Modal 2-column form rows stack */
+  .form-row-2col {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .modal-window {
+    padding: 16px 12px;
+  }
+
+  .modal-title {
+    font-size: 13px;
+  }
+
+  .preset-pill-btn {
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+}
+
+/* --------------------------------------------------------
+   4. COMPACT / NARROW SCREENS (<= 360px)
+   -------------------------------------------------------- */
+@media (max-width: 360px) {
+  .top-nav {
+    padding: 6px 6px;
+  }
+
+  .brand-logo-badge {
+    font-size: 9px;
+    padding: 3px 6px;
+  }
+
+  .subject-title {
+    font-size: 16px;
+  }
+
+  .subject-code-tag {
+    font-size: 20px;
+  }
+
+  .margin-readout-huge {
+    font-size: 28px;
+  }
+
+  .telemetry-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .home-global-stats-hud {
+    grid-template-columns: 1fr;
+  }
+
+  .marks-input-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .marks-divider {
+    display: none;
+  }
 }

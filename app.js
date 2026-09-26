@@ -669,8 +669,8 @@ class AcademicRunnerApp {
       const isActive = course.id === this.activeCourseId;
       return `
         <div class="course-tab-item ${isActive ? 'active' : ''}" data-course-id="${course.id}">
-          <span>${course.code}</span>
-          <span class="tab-credits">${course.credits} CR</span>
+          <span style="font-weight:800;letter-spacing:0.06em;">${course.code}</span>
+          <span class="tab-credits">[ ${course.credits} CR ]</span>
           <button class="tab-delete-btn" data-delete-id="${course.id}" title="Remove course">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -801,13 +801,19 @@ class AcademicRunnerApp {
         : '100% (Assumed)';
 
       return `
-        <div class="home-subject-card ${stats.statusZone}" data-course-id="${course.id}">
+        <div class="home-subject-card tactical-card-corners ${stats.statusZone}" data-course-id="${course.id}">
+          <span class="hud-corner-crosshair tl"></span>
+          <span class="hud-corner-crosshair tr"></span>
+          <span class="hud-corner-crosshair bl"></span>
+          <span class="hud-corner-crosshair br"></span>
+          ${stats.statusZone !== 'safe' ? '<div class="hazard-stripe-strip" style="margin-bottom:12px;" aria-hidden="true"></div>' : ''}
           <div class="home-card-header">
             <div>
               <div class="home-card-code-line">
                 <span class="home-card-code">${course.code}</span>
-                <span class="meta-pill">${credits} CREDITS</span>
+                <span class="meta-pill">[ ${credits} CR ]</span>
                 <span class="home-card-target-pill">GOAL &gt;${stats.target}%</span>
+                <span style="font-family:var(--font-mono);font-size:9.5px;color:var(--text-muted);letter-spacing:0.1em;">SN-IITD-${course.code}</span>
               </div>
               <h3 class="home-card-title">${course.title.toUpperCase()}</h3>
             </div>
@@ -883,7 +889,11 @@ class AcademicRunnerApp {
     }).join('');
 
     const addCardHtml = `
-      <div class="home-add-card" id="homeAddCardTrigger">
+      <div class="home-add-card tactical-card-corners" id="homeAddCardTrigger">
+        <span class="hud-corner-crosshair tl"></span>
+        <span class="hud-corner-crosshair tr"></span>
+        <span class="hud-corner-crosshair bl"></span>
+        <span class="hud-corner-crosshair br"></span>
         <div class="home-add-card-icon">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
             <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -892,6 +902,7 @@ class AcademicRunnerApp {
         </div>
         <div class="home-add-card-title">ENROLL NEW SUBJECT</div>
         <div class="home-add-card-desc">Add MTL100, COL100, ELL100, PYL100, APL100 or custom course breakdown</div>
+        <span style="font-family:var(--font-mono);font-size:9.5px;color:var(--neon-volt);letter-spacing:0.14em;margin-top:6px;">[ + INITIALIZE ]</span>
       </div>
     `;
 
@@ -1035,11 +1046,15 @@ class AcademicRunnerApp {
       const weightedLost = isCompleted ? item.weight - weightedEarned : 0;
 
       return `
-        <div class="assessment-card ${isCompleted ? 'completed' : 'pending'}" id="card-${item.id}">
+        <div class="assessment-card tactical-card-corners ${isCompleted ? 'completed' : 'pending'}" id="card-${item.id}">
+          <span class="hud-corner-crosshair tl"></span>
+          <span class="hud-corner-crosshair tr"></span>
+          <span class="hud-corner-crosshair bl"></span>
+          <span class="hud-corner-crosshair br"></span>
           <div class="card-main-row">
             <div class="item-identity">
-              <!-- Editable Weightage Badge -->
-              <div style="display:flex;align-items:center;gap:8px;">
+              <!-- Editable Weightage Badge & Serial Stamp -->
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                 <div class="card-weight-ctrl">
                   <div class="weight-input-flex" title="Click to edit weightage of this assessment">
                     <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);margin-right:2px;">WT:</span>
@@ -1055,6 +1070,7 @@ class AcademicRunnerApp {
                     <span class="weight-suffix">%</span>
                   </div>
                 </div>
+                <span style="font-family:var(--font-mono);font-size:9.5px;color:var(--neon-cyan);letter-spacing:0.1em;">SN-ASSESS-${item.id.toUpperCase()}</span>
               </div>
 
               <h3 class="item-name">${item.name}</h3>
@@ -1781,6 +1797,15 @@ class AcademicRunnerApp {
           window.sfx.playWarning();
           this.openAddCourseModal();
         }
+      });
+    }
+
+    // Footer Reset Purge Trigger
+    const footerResetBtn = document.getElementById('footerResetTrigger');
+    if (footerResetBtn) {
+      footerResetBtn.addEventListener('click', () => {
+        const resetBtn = document.getElementById('resetDataBtn');
+        if (resetBtn) resetBtn.click();
       });
     }
   }
