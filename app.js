@@ -1,9 +1,9 @@
 // MARATHON // IITD ACADEMIC MARGIN TELEMETRY ENGINE
 // Reactive State Management, Custom Weightages, Subsections & Simulator
 
-const STORAGE_KEY = 'iitd_runner_courses_v2';
-const ACTIVE_COURSE_KEY = 'iitd_runner_active_course_v2';
-const INITIALIZED_KEY = 'iitd_runner_initialized_v2';
+const STORAGE_KEY = 'iitd_runner_courses_v1';
+const ACTIVE_COURSE_KEY = 'iitd_runner_active_course_v1';
+const INITIALIZED_KEY = 'iitd_runner_initialized';
 
 // Baseline starts empty with zero subjects
 const DEFAULT_COURSES = [];
@@ -133,19 +133,23 @@ const COURSE_PRESETS = {
 
 class AcademicRunnerApp {
   constructor() {
+    // Check if the user has opened the app before
+    const hasExistingData = localStorage.getItem('iitd_runner_courses_v1') || localStorage.getItem('iitd_runner_courses_v2');
     const hasInitialized = localStorage.getItem(INITIALIZED_KEY);
-    this.isFirstEverOpen = !hasInitialized;
+    
+    // Only mark as first ever open if there is completely zero prior history
+    this.isFirstEverOpen = !hasExistingData && !hasInitialized;
     if (this.isFirstEverOpen) {
       localStorage.setItem(INITIALIZED_KEY, 'true');
     }
 
     this.courses = this.loadCourses();
-    this.activeCourseId = localStorage.getItem(ACTIVE_COURSE_KEY) || 'home';
+    this.activeCourseId = localStorage.getItem(ACTIVE_COURSE_KEY) || localStorage.getItem('iitd_runner_active_course_v2') || 'home';
     this.simulatedValues = {};
     
     // Ensure activeCourseId is valid ('home' or existing course id)
     if (this.courses.length === 0 || (this.activeCourseId !== 'home' && !this.courses.some(c => c.id === this.activeCourseId))) {
-      this.activeCourseId = 'home';
+      this.activeCourseId = this.courses.length > 0 ? this.courses[0].id : 'home';
     }
 
     // Ensure all parent assessments with subitems have scores recalculated with full assumption
@@ -162,10 +166,11 @@ class AcademicRunnerApp {
 
   loadCourses() {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      // Prioritize existing saved user data from v1, fallback to v2
+      const stored = localStorage.getItem('iitd_runner_courses_v1') || localStorage.getItem('iitd_runner_courses_v2');
       if (stored !== null) {
         const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
+        if (Array.isArray(parsed) && parsed.length > 0) {
           return parsed;
         }
       }
@@ -592,7 +597,7 @@ class AcademicRunnerApp {
     this.bindEvents();
     this.initClock();
 
-    if (this.isFirstEverOpen || this.courses.length === 0) {
+    if (this.isFirstEverOpen) {
       this.openAddCourseModal();
     }
   }
