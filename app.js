@@ -1,50 +1,25 @@
 // MARATHON // IITD ACADEMIC MARGIN TELEMETRY ENGINE
 // Reactive State Management, Custom Weightages, Subsections & Simulator
 
-const STORAGE_KEY = 'iitd_runner_courses_v1';
-const ACTIVE_COURSE_KEY = 'iitd_runner_active_course_v1';
+const STORAGE_KEY = 'iitd_runner_courses_v2';
+const ACTIVE_COURSE_KEY = 'iitd_runner_active_course_v2';
+const INITIALIZED_KEY = 'iitd_runner_initialized_v2';
 
-// Default initial dataset featuring CML1001 and CMP1000
-const DEFAULT_COURSES = [
-  {
-    id: 'cml1001',
+// Baseline starts empty with zero subjects
+const DEFAULT_COURSES = [];
+
+// Presets for common IITD 1st-Year courses
+const COURSE_PRESETS = {
+  CML1001: {
     code: 'CML1001',
     title: 'Molecular Science & Chemistry',
     credits: 3,
     target: 85.0,
     assessments: [
-      {
-        id: 'cq1',
-        name: 'Common Quiz 1',
-        date: 'Tue, 1 Sep 2026',
-        weight: 10,
-        achieved: null,
-        total: 10
-      },
-      {
-        id: 'midsem',
-        name: 'Mid Semester Exam',
-        date: 'Mid-Sem Week (Oct 2026)',
-        weight: 30,
-        achieved: null,
-        total: 30
-      },
-      {
-        id: 'cq2',
-        name: 'Common Quiz 2',
-        date: '27 Oct 2026',
-        weight: 10,
-        achieved: null,
-        total: 10
-      },
-      {
-        id: 'major',
-        name: 'Major Exam',
-        date: 'Major Week (Nov 2026)',
-        weight: 40,
-        achieved: null,
-        total: 40
-      },
+      { id: 'cq1', name: 'Common Quiz 1', date: 'Tue, 1 Sep 2026', weight: 10, achieved: null, total: 10 },
+      { id: 'midsem', name: 'Mid Semester Exam', date: 'Mid-Sem Week (Oct 2026)', weight: 30, achieved: null, total: 30 },
+      { id: 'cq2', name: 'Common Quiz 2', date: '27 Oct 2026', weight: 10, achieved: null, total: 10 },
+      { id: 'major', name: 'Major Exam', date: 'Major Week (Nov 2026)', weight: 40, achieved: null, total: 40 },
       {
         id: 'tut',
         name: 'Tutorial Quiz',
@@ -63,59 +38,6 @@ const DEFAULT_COURSES = [
       }
     ]
   },
-  {
-    id: 'cmp1000',
-    code: 'CMP1000',
-    title: 'Chemistry Laboratory',
-    credits: 2,
-    target: 85.0,
-    assessments: [
-      {
-        id: 'lab_perf',
-        name: 'Continuous Lab Performance',
-        date: 'Weekly Lab Sessions',
-        weight: 40,
-        achieved: null,
-        total: 100
-      },
-      {
-        id: 'pre_lab',
-        name: 'Pre-Lab Quizzes & Viva',
-        date: 'Before Each Lab Experiment',
-        weight: 20,
-        achieved: null,
-        total: 20,
-        hasSubitems: true,
-        subitems: [
-          { id: 'pl1', name: 'Pre-Lab 1', weight: 4, achieved: null, total: 10 },
-          { id: 'pl2', name: 'Pre-Lab 2', weight: 4, achieved: null, total: 10 },
-          { id: 'pl3', name: 'Pre-Lab 3', weight: 4, achieved: null, total: 10 },
-          { id: 'pl4', name: 'Pre-Lab 4', weight: 4, achieved: null, total: 10 },
-          { id: 'pl5', name: 'Pre-Lab 5', weight: 4, achieved: null, total: 10 }
-        ]
-      },
-      {
-        id: 'reports',
-        name: 'Lab Reports & Records',
-        date: 'Weekly Submissions',
-        weight: 15,
-        achieved: null,
-        total: 50
-      },
-      {
-        id: 'major_lab',
-        name: 'End-Sem Lab Practical & Viva',
-        date: 'End of Semester',
-        weight: 25,
-        achieved: null,
-        total: 50
-      }
-    ]
-  }
-];
-
-// Presets for other common IITD 1st-Year courses
-const COURSE_PRESETS = {
   CMP1000: {
     code: 'CMP1000',
     title: 'Chemistry Laboratory',
@@ -211,12 +133,18 @@ const COURSE_PRESETS = {
 
 class AcademicRunnerApp {
   constructor() {
+    const hasInitialized = localStorage.getItem(INITIALIZED_KEY);
+    this.isFirstEverOpen = !hasInitialized;
+    if (this.isFirstEverOpen) {
+      localStorage.setItem(INITIALIZED_KEY, 'true');
+    }
+
     this.courses = this.loadCourses();
     this.activeCourseId = localStorage.getItem(ACTIVE_COURSE_KEY) || 'home';
     this.simulatedValues = {};
     
     // Ensure activeCourseId is valid ('home' or existing course id)
-    if (this.activeCourseId !== 'home' && !this.courses.some(c => c.id === this.activeCourseId)) {
+    if (this.courses.length === 0 || (this.activeCourseId !== 'home' && !this.courses.some(c => c.id === this.activeCourseId))) {
       this.activeCourseId = 'home';
     }
 
@@ -235,14 +163,9 @@ class AcademicRunnerApp {
   loadCourses() {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
+      if (stored !== null) {
         const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          // If user previously only had CML1001, automatically append CMP1000 so they have both
-          if (!parsed.some(c => c.code === 'CMP1000')) {
-            const cmp = JSON.parse(JSON.stringify(DEFAULT_COURSES.find(c => c.code === 'CMP1000')));
-            if (cmp) parsed.push(cmp);
-          }
+        if (Array.isArray(parsed)) {
           return parsed;
         }
       }
@@ -258,6 +181,9 @@ class AcademicRunnerApp {
   }
 
   getActiveCourse() {
+    if (this.courses.length === 0) {
+      return null;
+    }
     if (this.activeCourseId === 'home') {
       return this.courses[0];
     }
@@ -665,6 +591,17 @@ class AcademicRunnerApp {
     this.render();
     this.bindEvents();
     this.initClock();
+
+    if (this.isFirstEverOpen || this.courses.length === 0) {
+      this.openAddCourseModal();
+    }
+  }
+
+  openAddCourseModal() {
+    const modal = document.getElementById('addCourseModal');
+    if (modal) {
+      modal.classList.add('active');
+    }
   }
 
   initClock() {
@@ -687,11 +624,18 @@ class AcademicRunnerApp {
     const homeSection = document.getElementById('homeCockpitSection');
     const singleSection = document.getElementById('singleCourseSection');
 
-    if (this.activeCourseId === 'home') {
+    if (this.activeCourseId === 'home' || this.courses.length === 0) {
+      this.activeCourseId = 'home';
       if (homeSection) homeSection.style.display = 'block';
       if (singleSection) singleSection.style.display = 'none';
       this.renderHomeCockpit();
     } else {
+      const course = this.getActiveCourse();
+      if (!course) {
+        this.activeCourseId = 'home';
+        this.render();
+        return;
+      }
       if (homeSection) homeSection.style.display = 'none';
       if (singleSection) singleSection.style.display = 'block';
       this.renderHeaderBanner();
@@ -705,7 +649,7 @@ class AcademicRunnerApp {
     const listEl = document.getElementById('courseTabsList');
     if (!listEl) return;
 
-    const isHomeActive = this.activeCourseId === 'home';
+    const isHomeActive = this.activeCourseId === 'home' || this.courses.length === 0;
     const homeTabHtml = `
       <div class="course-tab-item home-tab ${isHomeActive ? 'active' : ''}" data-course-id="home">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -718,19 +662,16 @@ class AcademicRunnerApp {
 
     const coursesTabsHtml = this.courses.map(course => {
       const isActive = course.id === this.activeCourseId;
-      const canDelete = this.courses.length > 1;
       return `
         <div class="course-tab-item ${isActive ? 'active' : ''}" data-course-id="${course.id}">
           <span>${course.code}</span>
           <span class="tab-credits">${course.credits} CR</span>
-          ${canDelete ? `
-            <button class="tab-delete-btn" data-delete-id="${course.id}" title="Remove course">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
-          ` : ''}
+          <button class="tab-delete-btn" data-delete-id="${course.id}" title="Remove course">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
         </div>
       `;
     }).join('');
@@ -787,7 +728,10 @@ class AcademicRunnerApp {
     if (creditsEl) creditsEl.textContent = `${totalCredits} CREDITS ENROLLED`;
     if (summaryCountEl) summaryCountEl.textContent = `${this.courses.length} COURSES LOADED`;
     if (statusTextEl) {
-      if (atRiskCount > 0) {
+      if (this.courses.length === 0) {
+        statusTextEl.textContent = `NO ENROLLED SUBJECTS // CLICK + ADD SUBJECT`;
+        statusTextEl.style.color = 'var(--text-muted)';
+      } else if (atRiskCount > 0) {
         statusTextEl.textContent = `CAUTION: ${atRiskCount} COURSE(S) AT RISK`;
         statusTextEl.style.color = 'var(--neon-crimson)';
       } else {
@@ -797,24 +741,43 @@ class AcademicRunnerApp {
     }
 
     if (avgMarginEl) {
-      avgMarginEl.textContent = `${avgMargin >= 0 ? '+' : ''}${avgMargin.toFixed(2)}%`;
-      avgMarginEl.className = `stat-cell-val ${avgMargin > 7 ? 'accent-volt' : avgMargin > 3 ? 'accent-amber' : 'accent-crimson'}`;
+      if (this.courses.length === 0) {
+        avgMarginEl.textContent = '--%';
+        avgMarginEl.className = 'stat-cell-val';
+      } else {
+        avgMarginEl.textContent = `${avgMargin >= 0 ? '+' : ''}${avgMargin.toFixed(2)}%`;
+        avgMarginEl.className = `stat-cell-val ${avgMargin > 7 ? 'accent-volt' : avgMargin > 3 ? 'accent-amber' : 'accent-crimson'}`;
+      }
     }
 
     if (avgScoreEl) {
-      avgScoreEl.textContent = `${avgScore.toFixed(1)}%`;
-      avgScoreEl.className = `stat-cell-val ${avgScore >= avgTarget ? 'accent-cyan' : 'accent-crimson'}`;
+      if (this.courses.length === 0) {
+        avgScoreEl.textContent = '--%';
+        avgScoreEl.className = 'stat-cell-val';
+      } else {
+        avgScoreEl.textContent = `${avgScore.toFixed(1)}%`;
+        avgScoreEl.className = `stat-cell-val ${avgScore >= avgTarget ? 'accent-cyan' : 'accent-crimson'}`;
+      }
     }
 
-    if (lowestMarginEl && lowestMarginCourse) {
-      lowestMarginEl.textContent = `${lowestMarginCourse.code} (${lowestMarginCourse.margin >= 0 ? '+' : ''}${lowestMarginCourse.margin.toFixed(1)}%)`;
-      lowestMarginEl.className = `stat-cell-val ${lowestMarginCourse.margin > 7 ? 'accent-volt' : lowestMarginCourse.margin > 3 ? 'accent-amber' : 'accent-crimson'}`;
+    if (lowestMarginEl) {
+      if (lowestMarginCourse) {
+        lowestMarginEl.textContent = `${lowestMarginCourse.code} (${lowestMarginCourse.margin >= 0 ? '+' : ''}${lowestMarginCourse.margin.toFixed(1)}%)`;
+        lowestMarginEl.className = `stat-cell-val ${lowestMarginCourse.margin > 7 ? 'accent-volt' : lowestMarginCourse.margin > 3 ? 'accent-amber' : 'accent-crimson'}`;
+      } else {
+        lowestMarginEl.textContent = 'NONE';
+        lowestMarginEl.className = 'stat-cell-val';
+      }
     }
 
-    if (lowestMarginDesc && lowestMarginCourse) {
-      lowestMarginDesc.textContent = lowestMarginCourse.margin >= 0 
-        ? `Smallest safety buffer remaining. Target: >${lowestMarginCourse.target}%`
-        : `Deficit detected! Currently below target by ${Math.abs(lowestMarginCourse.margin).toFixed(1)}%`;
+    if (lowestMarginDesc) {
+      if (lowestMarginCourse) {
+        lowestMarginDesc.textContent = lowestMarginCourse.margin >= 0 
+          ? `Smallest safety buffer remaining. Target: >${lowestMarginCourse.target}%`
+          : `Deficit detected! Currently below target by ${Math.abs(lowestMarginCourse.margin).toFixed(1)}%`;
+      } else {
+        lowestMarginDesc.textContent = 'Enroll subjects to begin margin tracking';
+      }
     }
 
     if (atRiskEl) {
@@ -1773,28 +1736,25 @@ class AcademicRunnerApp {
     const resetBtn = document.getElementById('resetDataBtn');
     if (resetBtn) {
       resetBtn.addEventListener('click', () => {
-        if (confirm('Reset dashboard to fresh CML1001 & CMP1000 baseline? Any custom scores will be reset.')) {
-          this.courses = JSON.parse(JSON.stringify(DEFAULT_COURSES));
-          this.activeCourseId = this.courses[0].id;
+        if (confirm('Reset dashboard to fresh baseline? All subjects and telemetry will be cleared.')) {
+          this.courses = [];
+          this.activeCourseId = 'home';
           this.saveCourses();
           this.render();
-          this.showToast('SYSTEM RESET TO BASELINE');
+          this.showToast('SYSTEM RESET TO EMPTY BASELINE');
           window.sfx.playWarning();
+          this.openAddCourseModal();
         }
       });
     }
   }
 
   deleteCourse(courseId) {
-    if (this.courses.length <= 1) {
-      alert('Cannot delete the last remaining course.');
-      return;
-    }
     const course = this.courses.find(c => c.id === courseId);
     if (!confirm(`Delete course ${course ? course.code : ''}?`)) return;
 
     this.courses = this.courses.filter(c => c.id !== courseId);
-    if (this.activeCourseId === courseId) {
+    if (this.activeCourseId === courseId || this.courses.length === 0) {
       this.activeCourseId = 'home';
     }
     this.saveCourses();
