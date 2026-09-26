@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MARATHON // IITD ACADEMIC TELEMETRY - First Year Marks & Margin Tracker</title>
+  <meta name="description" content="High-octane academic performance tracking HUD for IIT Delhi first-year courses with real-time error margin diagnostics, target thresholds, and assessment simulator.">
+  <meta name="keywords" content="IIT Delhi, IITD, Academic Dashboard, Marathon UI, CML1001, Marks Tracker, Grade Predictor, Engineering">
+  <meta name="theme-color" content="#07080b">
+  
+  <link rel="stylesheet" href="marathon.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 fill=%22%23e5fe00%22/><circle cx=%2250%22 cy=%2250%22 r=%2230%22 fill=%22%23000%22/></svg>">
+</head>
+<body>
+
+  <!-- Tech Grid Background Pattern -->
+  <div class="tech-grid-bg" aria-hidden="true"></div>
+
+  <!-- Top Tactical Navigation Bar -->
+  <header class="top-nav">
+    <div class="brand-section">
+      <div class="brand-logo-badge" title="Bungie Marathon Inspired Design">
+        <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="30" cy="30" r="28" fill="none" stroke="currentColor" stroke-width="4"/>
+          <path d="M30 18C23.4 18 18 23.5 18 30.1C18 36.1 22.5 41 28.4 41.8V34.4C25 33.6 22.5 30.6 22.5 27C22.5 22.9 25.9 19.5 30 19.5C34.1 19.5 37.5 22.9 37.5 27C37.5 30.6 35 33.6 31.6 34.4V41.8C37.5 41 42 36.1 42 30C42 23.4 36.6 18 30 18Z" fill="currentColor"/>
+        </svg>
+        <span>RUNNER // IITD</span>
+      </div>
+
+      <div class="brand-telemetry">
+        <div class="sys-id">SYS.TELEMETRY.ACAD // 2026.SEM1</div>
+        <div class="campus-tag">LOC: 28.5450° N, 77.1926° E • HAUZ KHAS</div>
+      </div>
+    </div>
+
+    <div class="nav-actions">
+      <!-- Live Clock -->
+      <div id="liveClock" style="font-family:var(--font-mono);font-size:11px;color:var(--text-mid);letter-spacing:0.1em;">--:--:-- IST</div>
+
+      <!-- Sound FX Toggle -->
+      <button class="tactical-btn" id="soundToggleBtn" title="Toggle Synthesizer Sound Effects">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+        </svg>
+        <span id="soundStatusLabel">SFX: ON</span>
+      </button>
+
+      <!-- Export Data Backup -->
+      <button class="tactical-btn icon-only" id="exportDataBtn" title="Export Telemetry JSON Backup">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+      </button>
+
+      <!-- Reset Default Baseline -->
+      <button class="tactical-btn icon-only danger" id="resetDataBtn" title="Reset to Factory CML1001 Baseline">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="1 4 1 10 7 10"></polyline>
+          <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content Layout -->
+  <main class="main-wrapper">
+
+    <!-- Course Switcher Ribbon Bar -->
+    <section class="course-ribbon-bar">
+      <div class="course-tabs-list" id="courseTabsList">
+        <!-- Rendered reactively via app.js -->
+      </div>
+
+      <button class="tactical-btn primary" id="openAddCourseBtn">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>ADD SUBJECT</span>
+      </button>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- SECTION 1: HOME COCKPIT OVERVIEW (SEMESTER DASHBOARD)   -->
+    <!-- ======================================================== -->
+    <div id="homeCockpitSection" class="home-cockpit-view" style="display:none;">
+      <!-- Semester Cockpit Header Banner -->
+      <section class="home-cockpit-banner">
+        <div class="banner-left">
+          <div class="banner-meta-line">
+            <span class="meta-pill">MISSION CONTROL</span>
+            <span>INDIAN INSTITUTE OF TECHNOLOGY DELHI</span>
+            <span>// FIRST YEAR CURRICULUM</span>
+          </div>
+          <h1 class="subject-title">
+            <span class="subject-code-tag">ACADEMIC RADAR</span>
+            <span>SEMESTER PERFORMANCE & ERROR MARGINS</span>
+          </h1>
+          <div style="font-family:var(--font-mono);font-size:12px;color:var(--text-mid);">
+            STATUS: <span style="color:var(--neon-volt)" id="homeGlobalStatusText">ALL ENROLLED COURSES MONITORED</span> • <span id="homeTotalCreditsText">5 CREDITS ENROLLED</span>
+          </div>
+        </div>
+
+        <div class="banner-right">
+          <button class="tactical-btn primary" id="homeAddCourseBtn">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>ENROLL NEW SUBJECT</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Global Semester Telemetry 4-Stat HUD -->
+      <section class="home-global-stats-hud">
+        <div class="stat-cell">
+          <div class="stat-cell-top">
+            <span class="stat-cell-label">AVG MARGIN BUFFER</span>
+            <span class="stat-cell-code">SEMESTER.01</span>
+          </div>
+          <div class="stat-cell-val accent-volt" id="homeAvgMarginVal">+14.30%</div>
+          <div class="stat-cell-desc">Mean permissible loss cushion remaining across all courses.</div>
+        </div>
+
+        <div class="stat-cell">
+          <div class="stat-cell-top">
+            <span class="stat-cell-label">PROJECTED AVG %</span>
+            <span class="stat-cell-code">SEMESTER.02</span>
+          </div>
+          <div class="stat-cell-val accent-cyan" id="homeAvgScoreVal">98.8%</div>
+          <div class="stat-cell-desc">Credit-weighted average grade (unfilled marks assumed full).</div>
+        </div>
+
+        <div class="stat-cell">
+          <div class="stat-cell-top">
+            <span class="stat-cell-label">LOWEST MARGIN</span>
+            <span class="stat-cell-code">SEMESTER.03</span>
+          </div>
+          <div class="stat-cell-val accent-amber" id="homeLowestMarginVal">CML1001</div>
+          <div class="stat-cell-desc" id="homeLowestMarginDesc">Least error buffer remaining. Watch closely.</div>
+        </div>
+
+        <div class="stat-cell">
+          <div class="stat-cell-top">
+            <span class="stat-cell-label">SUBJECTS AT RISK</span>
+            <span class="stat-cell-code">SEMESTER.04</span>
+          </div>
+          <div class="stat-cell-val accent-volt" id="homeAtRiskCountVal">0 / 2</div>
+          <div class="stat-cell-desc">Courses with margin cushion under 5.0% or in deficit.</div>
+        </div>
+      </section>
+
+      <!-- Section Title for Course Cards -->
+      <div class="section-header-bar" style="margin-top:24px;">
+        <div class="section-title">
+          <svg viewBox="0 0 24 24">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          <span>ALL ENROLLED SUBJECTS // STATUS & MARGIN MATRIX</span>
+        </div>
+        <div class="section-stats-summary" id="homeSummaryCourseCount">2 COURSES LOADED</div>
+      </div>
+
+      <!-- Subject Cards Grid -->
+      <section class="home-subjects-grid" id="homeSubjectsGrid">
+        <!-- Rendered reactively via app.js -->
+      </section>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- SECTION 2: SINGLE COURSE VIEW                           -->
+    <!-- ======================================================== -->
+    <div id="singleCourseSection" class="single-course-view">
+
+    <!-- Header Subject Telemetry Banner -->
+    <section class="subject-telemetry-banner">
+      <div class="banner-left">
+        <div class="banner-meta-line">
+          <span class="meta-pill">COURSE FILE</span>
+          <span>INDIAN INSTITUTE OF TECHNOLOGY DELHI</span>
+          <span>// FIRST YEAR CURRICULUM</span>
+        </div>
+        <h1 class="subject-title">
+          <span class="subject-code-tag" id="subjectCodeDisplay">CML1001</span>
+          <span id="subjectTitleDisplay">MOLECULAR SCIENCE & CHEMISTRY</span>
+        </h1>
+        <div style="font-family:var(--font-mono);font-size:12px;color:var(--text-mid);">
+          STATUS: <span style="color:var(--neon-volt)">ACADEMIC ENGAGEMENT ACTIVE</span> • <span id="subjectCreditsDisplay">3 CREDITS</span>
+        </div>
+      </div>
+
+      <div class="banner-right">
+        <!-- Target Score Customizer -->
+        <div class="target-selector-box">
+          <div class="target-selector-label">// OBJECTIVE THRESHOLD</div>
+          <div class="target-controls">
+            <span style="font-family:var(--font-mono);font-size:12px;color:var(--text-mid);">GOAL &gt;</span>
+            <input 
+              type="range" 
+              class="target-slider" 
+              id="targetScoreSlider" 
+              min="50" 
+              max="98" 
+              step="0.5" 
+              value="85"
+            />
+            <div class="target-display-value" id="targetDisplayValue">85.0%</div>
+          </div>
+          <!-- Quick Target Presets -->
+          <div style="display:flex;gap:6px;margin-top:4px;">
+            <button class="preset-pill-btn preset-target-btn" data-target="80">80%</button>
+            <button class="preset-pill-btn preset-target-btn" data-target="85">85%</button>
+            <button class="preset-pill-btn preset-target-btn" data-target="90">90%</button>
+            <button class="preset-pill-btn preset-target-btn" data-target="95">95%</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CORE TELEMETRY ENGINE: MARGIN HERO HUD CARD & STATS -->
+    <section class="margin-hero-hud">
+      <!-- Left: Massive Margin Buffer Readout -->
+      <div class="margin-gauge-card">
+        <div class="hud-corner-marker tl"></div>
+        <div class="hud-corner-marker tr"></div>
+        <div class="hud-corner-marker bl"></div>
+        <div class="hud-corner-marker br"></div>
+
+        <div class="margin-gauge-header">
+          <div class="gauge-title">ERROR MARGIN REMAINING</div>
+          <div class="status-pill safe" id="heroStatusPill">[ OPTIMAL CUSHION ]</div>
+        </div>
+
+        <div class="margin-readout-center">
+          <div class="margin-readout-sub">PERMITTED LOSS BUFFER</div>
+          <div class="margin-readout-huge" id="heroMarginValue">+15.00%</div>
+          <div class="margin-readout-caption" id="heroMarginDesc">
+            You can afford to lose at most <strong style="color:var(--neon-volt)">15.00%</strong> across the rest of the course to secure &gt;85%.
+          </div>
+        </div>
+
+        <div class="margin-meter-wrapper">
+          <div class="margin-meter-bar">
+            <div class="margin-meter-fill" id="heroMeterFill" style="width: 100%;"></div>
+          </div>
+          <div class="margin-meter-labels">
+            <span>0% (EXHAUSTED)</span>
+            <span id="meterPercentLabel">15.0% / 15.0% CUSHION</span>
+            <span>SAFE</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Telemetry Matrix Cells -->
+      <div class="telemetry-stats-grid">
+        <!-- Stat 1: Weight Earned -->
+        <div class="stat-cell">
+          <div class="stat-cell-top">
+            <span class="stat-cell-label">WEIGHT EARNED</span>
+            <span class="stat-cell-code">METRIC.01</span>
+          </div>
+          <div class="stat-cell-val accent-volt" id="statEarnedVal">0.00%</div>
+          <div class="stat-cell-desc">Cumulative weighted marks secured into final grade.</div>
+        </div>
+
+        <!-- Stat 2: Weight Lost -->
+        <div class="stat-cell">
+          <div class="stat-cell-top">
+            <span class="stat-cell-label">WEIGHT LOST</span>
+            <span class="stat-cell-code">METRIC.02</span>
+          </div>
+          <div class="stat-cell-val accent-crimson" id="statLostVal">0.00%</div>
+          <div class="stat-cell-desc">Marks forfeited so far vs max permissible loss.</div>
+        </div>
+
+        <!-- Stat 3: Required Run-Rate -->
+        <div class="stat-cell">
+          <div class="stat-cell-top">
+            <span class="stat-cell-label">REQ. RUN-RATE</span>
+            <span class="stat-cell-code">METRIC.03</span>
+          </div>
+          <div class="stat-cell-val accent-cyan" id="statRunRateVal">85.0%</div>
+          <div class="stat-cell-desc">Average percentage needed on future papers to reach target.</div>
+        </div>
+
+        <!-- Stat 4: Max Possible Ceiling -->
+        <div class="stat-cell">
+          <div class="stat-cell-top">
+            <span class="stat-cell-label">PROJECTED CEILING</span>
+            <span class="stat-cell-code">METRIC.04</span>
+          </div>
+          <div class="stat-cell-val accent-volt" id="statMaxScoreVal">100.0%</div>
+          <div class="stat-cell-desc">Score if 100% full marks are achieved on all remaining tests.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: ASSESSMENT LOGS -->
+    <div class="section-header-bar">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24">
+          <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+        </svg>
+        <span>COURSE ASSESSMENT ROSTER & MARKS ENTRY</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <div class="unfilled-assumption-indicator" title="Baseline setting: All unfilled marks are initially assumed to be 100% full marks">
+          <span class="indicator-dot"></span>
+          <span>UNFILLED: ASSUMED FULL</span>
+        </div>
+        <div class="weight-allocation-badge balanced" id="weightAllocationBadge">TOTAL WEIGHT: 100% [BALANCED]</div>
+        <div class="section-stats-summary" id="sectionSummaryText">0% EVALUATED // 100% PENDING (ASSUMED FULL)</div>
+      </div>
+    </div>
+
+    <!-- Assessment Cards Roster -->
+    <section class="assessments-grid" id="assessmentsContainer">
+      <!-- Rendered dynamically by app.js -->
+    </section>
+
+    <!-- Add New Assessment Subsection / Component Button -->
+    <button class="tactical-btn" id="openAddComponentBtn" style="margin-top:16px;width:100%;justify-content:center;border-style:dashed;padding:12px;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      <span>ADD ASSESSMENT COMPONENT / SUBSECTION</span>
+    </button>
+
+    <!-- SECTION: TACTICAL "WHAT-IF" SIMULATOR -->
+    <section class="simulator-box">
+      <div class="simulator-header">
+        <div class="simulator-title-group">
+          <div style="width:8px;height:8px;background:var(--neon-cyan);box-shadow:0 0 8px var(--neon-cyan);"></div>
+          <h2 class="simulator-title">// "WHAT-IF" PERFORMANCE SIMULATOR</h2>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);">QUICK SIM:</span>
+          <button class="preset-pill-btn sim-preset-btn" data-sim-val="100">100% (FULL)</button>
+          <button class="preset-pill-btn sim-preset-btn" data-sim-val="target">TARGET</button>
+          <button class="preset-pill-btn sim-preset-btn" data-sim-val="90">90%</button>
+          <button class="preset-pill-btn sim-preset-btn" data-sim-val="75">75%</button>
+        </div>
+      </div>
+
+      <div class="simulator-grid">
+        <div class="sim-sliders-list" id="simSlidersList">
+          <!-- Rendered dynamically by app.js -->
+        </div>
+
+        <div class="sim-outcome-card">
+          <div class="sim-outcome-label">// PROJECTED FINAL SCORE</div>
+          <div class="sim-outcome-score" id="simProjectedScore">85.00%</div>
+          <div class="sim-outcome-status status-pill safe" id="simProjectedStatus">TARGET MET (+0.00% CLEAR)</div>
+          <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-mid);" id="simMarginDiff">
+            Projected Final Cushion: +15.00%
+          </div>
+        </div>
+      </div>
+    </section>
+
+    </div> <!-- Close #singleCourseSection -->
+
+  </main>
+
+  <!-- ADD SUBJECT MODAL DIALOG -->
+  <div class="modal-overlay" id="addCourseModal">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title">// INITIALIZE NEW COURSE TELEMETRY</div>
+        <button class="modal-close-btn" id="closeAddCourseModal">&times;</button>
+      </div>
+
+      <form id="addCourseForm">
+        <div class="form-row">
+          <label class="form-label" for="newCourseCode">Course Code (e.g. CMP1000, MTL100, COL100)</label>
+          <input type="text" id="newCourseCode" class="form-input" placeholder="e.g. CMP1000" required />
+          <div class="preset-pills-row">
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);align-self:center;">QUICK PRESETS:</span>
+            <button type="button" class="preset-pill-btn" data-preset="CMP1000">CMP1000 (Chem Lab)</button>
+            <button type="button" class="preset-pill-btn" data-preset="MTL100">MTL100 (Calculus)</button>
+            <button type="button" class="preset-pill-btn" data-preset="COL100">COL100 (CS)</button>
+            <button type="button" class="preset-pill-btn" data-preset="ELL100">ELL100 (EE)</button>
+            <button type="button" class="preset-pill-btn" data-preset="PYL100">PYL100 (Physics)</button>
+            <button type="button" class="preset-pill-btn" data-preset="APL100">APL100 (Mech)</button>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label class="form-label" for="newCourseTitle">Course Full Title</label>
+          <input type="text" id="newCourseTitle" class="form-input" placeholder="e.g. Chemistry Laboratory" required />
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div class="form-row">
+            <label class="form-label" for="newCourseCredits">Credits</label>
+            <input type="number" id="newCourseCredits" class="form-input" min="1" max="6" value="2" required />
+          </div>
+
+          <div class="form-row">
+            <label class="form-label" for="newCourseTarget">Target Score %</label>
+            <input type="number" id="newCourseTarget" class="form-input" min="40" max="98" step="0.5" value="85" required />
+          </div>
+        </div>
+
+        <div style="margin-top:20px;display:flex;justify-content:flex-end;gap:12px;">
+          <button type="button" class="tactical-btn" onclick="document.getElementById('addCourseModal').classList.remove('active')">CANCEL</button>
+          <button type="submit" class="tactical-btn primary">INITIALIZE SUBJECT</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADD ASSESSMENT COMPONENT MODAL -->
+  <div class="modal-overlay" id="addComponentModal">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title">// ADD NEW ASSESSMENT / SUBSECTION</div>
+        <button class="modal-close-btn" id="closeAddComponentModal">&times;</button>
+      </div>
+
+      <form id="addComponentForm">
+        <div class="form-row">
+          <label class="form-label" for="newComponentName">Component Name</label>
+          <input type="text" id="newComponentName" class="form-input" placeholder="e.g. Pre-Lab Quizzes, Lab Continuous Evaluation, Term Project" required />
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div class="form-row">
+            <label class="form-label" for="newComponentWeight">Weightage (%)</label>
+            <input type="number" id="newComponentWeight" class="form-input" min="1" max="100" step="0.5" value="15" required />
+          </div>
+
+          <div class="form-row">
+            <label class="form-label" for="newComponentTotal">Paper Max Marks</label>
+            <input type="number" id="newComponentTotal" class="form-input" min="1" max="500" step="0.5" value="20" required />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label class="form-label" for="newComponentDate">Date / Frequency Note</label>
+          <input type="text" id="newComponentDate" class="form-input" placeholder="e.g. Weekly Lab Sessions, or 15 Nov" value="Throughout Semester" />
+        </div>
+
+        <div class="form-row" style="display:flex;align-items:center;gap:10px;margin-top:12px;background:var(--bg-surface-2);padding:10px;clip-path:var(--chamfer-sm);">
+          <input type="checkbox" id="newComponentHasSubs" style="accent-color:var(--neon-volt);width:18px;height:18px;cursor:pointer;" />
+          <label for="newComponentHasSubs" style="font-family:var(--font-mono);font-size:12px;color:#fff;cursor:pointer;">
+            Enable Detailed Subsections / Sub-Quizzes (e.g. Pre-Lab 1, Pre-Lab 2, etc.)
+          </label>
+        </div>
+
+        <div style="margin-top:20px;display:flex;justify-content:flex-end;gap:12px;">
+          <button type="button" class="tactical-btn" onclick="document.getElementById('addComponentModal').classList.remove('active')">CANCEL</button>
+          <button type="submit" class="tactical-btn primary">CREATE COMPONENT</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- EDIT COMPONENT NAME MODAL -->
+  <div class="modal-overlay" id="editComponentModal">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title">// RENAME / CONFIGURE COMPONENT</div>
+        <button class="modal-close-btn" id="closeEditComponentModal">&times;</button>
+      </div>
+
+      <form id="editComponentForm">
+        <input type="hidden" id="editComponentId" />
+        <div class="form-row">
+          <label class="form-label" for="editComponentName">Component Name</label>
+          <input type="text" id="editComponentName" class="form-input" required />
+        </div>
+
+        <div class="form-row">
+          <label class="form-label" for="editComponentDate">Date / Details</label>
+          <input type="text" id="editComponentDate" class="form-input" required />
+        </div>
+
+        <div style="margin-top:20px;display:flex;justify-content:flex-end;gap:12px;">
+          <button type="button" class="tactical-btn" onclick="document.getElementById('editComponentModal').classList.remove('active')">CANCEL</button>
+          <button type="submit" class="tactical-btn primary">SAVE CHANGES</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Tactical Toast Notification -->
+  <div class="tactical-toast" id="tacticalToast">
+    <div class="toast-indicator"></div>
+    <div id="toastMessageText">TELEMETRY UPDATED</div>
+  </div>
+
+  <!-- Audio Synthesizer & App Scripts -->
+  <script src="audio.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
