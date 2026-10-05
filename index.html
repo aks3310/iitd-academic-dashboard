@@ -51,13 +51,23 @@
       </button>
 
       <!-- Export Data Backup -->
-      <button class="tactical-btn icon-only" id="exportDataBtn" title="Export Telemetry JSON Backup">
+      <button class="tactical-btn icon-only" id="exportDataBtn" title="Export Telemetry JSON Backup" aria-label="Export Telemetry JSON Backup">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
           <polyline points="7 10 12 15 17 10"></polyline>
           <line x1="12" y1="15" x2="12" y2="3"></line>
         </svg>
       </button>
+
+      <!-- Upload / Import Telemetry JSON -->
+      <button class="tactical-btn icon-only" id="uploadDataBtn" title="Upload Telemetry from JSON" aria-label="Upload Telemetry from JSON">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="17 8 12 3 7 8"></polyline>
+          <line x1="12" y1="3" x2="12" y2="15"></line>
+        </svg>
+      </button>
+      <input type="file" id="uploadJsonInput" accept=".json,application/json" style="display:none;" />
 
       <!-- Reset Default Baseline -->
       <button class="tactical-btn icon-only danger" id="resetDataBtn" title="Reset to Fresh Baseline">
@@ -115,7 +125,13 @@
           </div>
         </div>
 
-        <div class="banner-right">
+        <div class="banner-right" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <button class="tactical-btn" id="homeJumpCgpaBtn" title="Open Grade Cutoff Matrix & CGPA Calculator">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M18 20V10M12 20V4M6 20v-6"></path>
+            </svg>
+            <span>CGPA & CUTOFF MATRIX</span>
+          </button>
           <button class="tactical-btn primary" id="homeAddCourseBtn">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
               <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -386,6 +402,153 @@
 
     </div> <!-- Close #singleCourseSection -->
 
+    <!-- ======================================================== -->
+    <!-- SECTION 3: GRADE CUTOFFS & CGPA CALCULATOR SECTION      -->
+    <!-- ======================================================== -->
+    <div id="cgpaCutoffsSection" class="cgpa-cutoffs-view" style="display:none;">
+
+      <!-- Banner Header -->
+      <section class="cgpa-cockpit-banner tactical-card-corners">
+        <div class="hazard-stripe-strip" style="position:absolute;top:0;left:0;right:0;" aria-hidden="true"></div>
+        <span class="hud-corner-crosshair tl"></span>
+        <span class="hud-corner-crosshair tr"></span>
+        <span class="hud-corner-crosshair bl"></span>
+        <span class="hud-corner-crosshair br"></span>
+
+        <div class="banner-left">
+          <div class="banner-meta-line">
+            <span class="meta-pill">CGPA TELEMETRY</span>
+            <span>INDIAN INSTITUTE OF TECHNOLOGY DELHI</span>
+            <span>// SEMESTER 1 & 2 CUTOFFS</span>
+            <span style="color:var(--neon-volt)">CROWD-SOURCED RESPONSES</span>
+          </div>
+          <h1 class="subject-title">
+            <span class="subject-code-tag">GRADE MATRIX</span>
+            <span>SUBJECT CUTOFFS & CGPA CALCULATOR</span>
+          </h1>
+          <div style="font-family:var(--font-mono);font-size:12px;color:var(--text-mid);">
+            STATUS: <span style="color:var(--neon-cyan)" id="cgpaActiveCountText">0 ENROLLED SUBJECTS</span> • <span id="cgpaTotalCreditsText">0 REGISTERED CREDITS</span>
+          </div>
+        </div>
+
+        <div class="banner-right">
+          <div class="cgpa-banner-actions">
+            <button class="tactical-btn primary" id="cgpaAddSubjectBtn">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              <span>+ ENROLL SUBJECT</span>
+            </button>
+            <button class="tactical-btn" id="resetAllCutoffsBtn" title="Reset all enrolled subjects' cutoffs to crowd-sourced baseline">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="1 4 1 10 7 10"></polyline>
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+              </svg>
+              <span>RESET TO BASELINES</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- CGPA Telemetry HUD (Hero Card + Stats Stack) -->
+      <section class="cgpa-global-hud">
+        <!-- Huge CGPA Readout Card -->
+        <div class="cgpa-hero-card tactical-card-corners">
+          <span class="hud-corner-crosshair tl"></span>
+          <span class="hud-corner-crosshair tr"></span>
+          <span class="hud-corner-crosshair bl"></span>
+          <span class="hud-corner-crosshair br"></span>
+
+          <div class="cgpa-hero-header">
+            <div class="gauge-title">// PROJECTED SEMESTER SGPA / CGPA</div>
+            <div class="status-pill safe" id="cgpaStatusPill">[ DISTINCTION ]</div>
+          </div>
+
+          <div class="cgpa-readout-center">
+            <div class="cgpa-readout-sub">CREDIT-WEIGHTED PERFORMANCE INDEX</div>
+            <div class="cgpa-readout-huge" id="cgpaValueDisplay">--.--</div>
+            <div class="cgpa-readout-scale">/ 10.00 SGPA</div>
+            <div class="cgpa-readout-caption" id="cgpaSummaryCaption">
+              Calculated across <strong style="color:var(--neon-volt)" id="cgpaCreditsSum">0</strong> registered credits • <span id="cgpaPointsSum">0.0</span> total grade points.
+            </div>
+          </div>
+
+          <!-- Segmented CGPA Bar -->
+          <div class="cgpa-progress-wrap">
+            <div class="cgpa-progress-bar">
+              <div class="cgpa-progress-fill" id="cgpaProgressFill" style="width: 0%;"></div>
+            </div>
+            <div class="cgpa-scale-labels">
+              <span>0.00 [FAIL]</span>
+              <span>4.00 [D]</span>
+              <span>7.00 [B-]</span>
+              <span>8.00 [B]</span>
+              <span>9.00 [A-]</span>
+              <span>10.00 [A]</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3 Quick Stats Cells -->
+        <div class="cgpa-stats-stack">
+          <div class="stat-cell">
+            <div class="stat-cell-top">
+              <span class="stat-cell-label">TOTAL REGISTERED CREDITS</span>
+              <span class="stat-cell-code">SEMESTER.CR</span>
+            </div>
+            <div class="stat-cell-val accent-volt" id="statCgpaTotalCredits">0 CR</div>
+            <div class="stat-cell-desc">Sum of credits for all subjects currently added to your dashboard.</div>
+          </div>
+
+          <div class="stat-cell">
+            <div class="stat-cell-top">
+              <span class="stat-cell-label">GRADE POINT SUM</span>
+              <span class="stat-cell-code">Σ(GR × CR)</span>
+            </div>
+            <div class="stat-cell-val accent-cyan" id="statCgpaTotalPoints">0.0 PTS</div>
+            <div class="stat-cell-desc">Cumulative Σ (Grade Point × Credits) secured across your courses.</div>
+          </div>
+
+          <div class="stat-cell highlight-cell">
+            <div class="stat-cell-top">
+              <span class="stat-cell-label">EASIEST GRADE BUMP</span>
+              <span class="stat-cell-code">OPPORTUNITY</span>
+            </div>
+            <div class="stat-cell-val accent-amber" id="statCgpaNextJumpTitle">NONE</div>
+            <div class="stat-cell-desc" id="statCgpaNextJumpDesc">Smallest gap to the next higher grade tier.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Control Toolbar: Sync Status & Search -->
+      <section class="cgpa-control-toolbar tactical-card-corners">
+        <div class="cgpa-toolbar-info" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <span class="toolbar-label">// ENROLLED SUBJECTS:</span>
+          <span class="cgpa-sync-pill" style="font-family:var(--font-mono);font-size:11px;color:var(--neon-volt);letter-spacing:0.06em;background:rgba(204,255,0,0.08);border:1px solid rgba(204,255,0,0.25);padding:4px 8px;">DERIVED DIRECTLY FROM YOUR DASHBOARD</span>
+        </div>
+
+        <div class="toolbar-search-group">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="cutoffSearchInput" placeholder="FILTER ENROLLED COURSES (e.g. CML, MTL, 1000)..." class="cutoff-search-input" />
+        </div>
+      </section>
+
+      <!-- Grade Breakdown Pill Counters -->
+      <section class="grade-distribution-bar" id="gradeDistributionBar">
+        <!-- Rendered dynamically (e.g. 2x Grade 10, 2x Grade 9, 1x Grade 8) -->
+      </section>
+
+      <!-- Course Cutoffs & Margins Cards List -->
+      <section class="cutoff-courses-container" id="cutoffCoursesContainer">
+        <!-- Rendered reactively via app.js -->
+      </section>
+
+    </div> <!-- Close #cgpaCutoffsSection -->
+
   </main>
 
   <!-- BUNGIE MARATHON AUTHENTIC 4-COLUMN WIREFRAME FOOTER -->
@@ -453,13 +616,16 @@
           <input type="text" id="newCourseCode" class="form-input" placeholder="e.g. CMP1000" required />
           <div class="preset-pills-row">
             <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);align-self:center;">QUICK PRESETS:</span>
-            <button type="button" class="preset-pill-btn" data-preset="CML1001">CML1001 (Chemistry)</button>
+            <button type="button" class="preset-pill-btn" data-preset="CML1001">CML1001 (Chem)</button>
+            <button type="button" class="preset-pill-btn" data-preset="CML1002">CML1002 (Chem 2)</button>
+            <button type="button" class="preset-pill-btn" data-preset="MTL1001">MTL1001 (Math)</button>
+            <button type="button" class="preset-pill-btn" data-preset="ELL1000">ELL1000 (EE)</button>
             <button type="button" class="preset-pill-btn" data-preset="CMP1000">CMP1000 (Chem Lab)</button>
-            <button type="button" class="preset-pill-btn" data-preset="MTL100">MTL100 (Calculus)</button>
-            <button type="button" class="preset-pill-btn" data-preset="COL100">COL100 (CS)</button>
-            <button type="button" class="preset-pill-btn" data-preset="ELL100">ELL100 (EE)</button>
-            <button type="button" class="preset-pill-btn" data-preset="PYL100">PYL100 (Physics)</button>
-            <button type="button" class="preset-pill-btn" data-preset="APL100">APL100 (Mech)</button>
+            <button type="button" class="preset-pill-btn" data-preset="PYP1000">PYP1000 (Physics Lab)</button>
+            <button type="button" class="preset-pill-btn" data-preset="MEP1001">MEP1001 (Workshop)</button>
+            <button type="button" class="preset-pill-btn" data-preset="PYL1001">PYL1001 (Physics)</button>
+            <button type="button" class="preset-pill-btn" data-preset="COL1000">COL1000 (Intro CS)</button>
+            <button type="button" class="preset-pill-btn" data-preset="MEP1000">MEP1000 (Graphics)</button>
           </div>
         </div>
 
@@ -561,6 +727,8 @@
       </form>
     </div>
   </div>
+
+
 
   <!-- Tactical Toast Notification -->
   <div class="tactical-toast" id="tacticalToast">

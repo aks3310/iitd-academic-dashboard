@@ -4,9 +4,124 @@
 const STORAGE_KEY = 'iitd_runner_courses_v1';
 const ACTIVE_COURSE_KEY = 'iitd_runner_active_course_v1';
 const INITIALIZED_KEY = 'iitd_runner_initialized';
+const CUTOFFS_STORAGE_KEY = 'iitd_runner_grade_cutoffs_v1';
 
 // Baseline starts empty with zero subjects
 const DEFAULT_COURSES = [];
+
+// Crowd-sourced official responses for IITD First-Year Grade Cutoffs
+const OFFICIAL_COURSE_CUTOFFS = [
+  {
+    code: 'CML1001',
+    title: 'Molecular Science & Chemistry',
+    credits: 3,
+    maxMarks: 100,
+    cycle: 'chemistry',
+    enabled: true,
+    userScore: 78.0,
+    cutoffs: { 10: 82.4, 9: 73.0, 8: 67.3, 7: 61.2, 6: 55.0, 5: 48.0, 4: 40.0, 3: 35.0, 2: 30.0, 1: 25.0, 0: 0.0 },
+    verifiedGrades: [10, 9, 8, 7]
+  },
+  {
+    code: 'CML1002',
+    title: 'Chemistry - Structure & Reactivity',
+    credits: 3,
+    maxMarks: 100,
+    cycle: 'chemistry',
+    enabled: false,
+    userScore: 74.0,
+    cutoffs: { 10: 79.25, 9: 69.5, 8: 62.0, 7: 55.0, 6: 48.0, 5: 42.0, 4: 35.0, 3: 30.0, 2: 25.0, 1: 20.0, 0: 0.0 },
+    verifiedGrades: [10, 9]
+  },
+  {
+    code: 'MTL1001',
+    title: 'Calculus & Linear Algebra',
+    credits: 4,
+    maxMarks: 100,
+    cycle: 'common',
+    enabled: true,
+    userScore: 71.0,
+    cutoffs: { 10: 79.5, 9: 69.0, 8: 59.25, 7: 49.75, 6: 41.5, 5: 35.0, 4: 30.0, 3: 25.0, 2: 20.0, 1: 15.0, 0: 0.0 },
+    verifiedGrades: [10, 9, 8, 7, 6, 5]
+  },
+  {
+    code: 'ELL1000',
+    title: 'Introduction to Electrical Engineering',
+    credits: 4,
+    maxMarks: 100,
+    cycle: 'chemistry',
+    enabled: true,
+    userScore: 72.0,
+    cutoffs: { 10: 80.0, 9: 70.0, 8: 60.0, 7: 51.0, 6: 43.0, 5: 36.0, 4: 30.0, 3: 25.0, 2: 20.0, 1: 15.0, 0: 0.0 },
+    verifiedGrades: [10, 9, 8, 7]
+  },
+  {
+    code: 'CMP1000',
+    title: 'Chemistry Laboratory',
+    credits: 2,
+    maxMarks: 100,
+    cycle: 'chemistry',
+    enabled: true,
+    userScore: 86.0,
+    cutoffs: { 10: 89.5, 9: 84.0, 8: 78.5, 7: 72.0, 6: 65.0, 5: 58.0, 4: 50.0, 3: 42.0, 2: 35.0, 1: 25.0, 0: 0.0 },
+    verifiedGrades: [10, 9, 8]
+  },
+  {
+    code: 'PYP1000',
+    title: 'Physics Laboratory',
+    credits: 2,
+    maxMarks: 160,
+    cycle: 'physics',
+    enabled: false,
+    userScore: 142.0,
+    cutoffs: { 10: 152.5, 9: 136.0, 8: 122.0, 7: 110.0, 6: 98.0, 5: 86.0, 4: 74.0, 3: 60.0, 2: 50.0, 1: 40.0, 0: 0.0 },
+    verifiedGrades: [10, 9]
+  },
+  {
+    code: 'MEP1001',
+    title: 'Product Realization through Manufacturing',
+    credits: 2,
+    maxMarks: 100,
+    cycle: 'physics',
+    enabled: false,
+    userScore: 75.0,
+    cutoffs: { 10: 80.25, 9: 72.0, 8: 64.0, 7: 56.0, 6: 48.0, 5: 42.0, 4: 35.0, 3: 30.0, 2: 25.0, 1: 20.0, 0: 0.0 },
+    verifiedGrades: [10, 9]
+  },
+  {
+    code: 'PYL1001',
+    title: 'Electromagnetic Waves & Quantum Mechanics',
+    credits: 3,
+    maxMarks: 100,
+    cycle: 'physics',
+    enabled: false,
+    userScore: 68.0,
+    cutoffs: { 10: 87.0, 9: 77.0, 8: 60.0, 7: 52.0, 6: 45.0, 5: 38.0, 4: 30.0, 3: 25.0, 2: 20.0, 1: 15.0, 0: 0.0 },
+    verifiedGrades: [10, 9, 8]
+  },
+  {
+    code: 'COL1000',
+    title: 'Introduction to Computer Science',
+    credits: 4,
+    maxMarks: 100,
+    cycle: 'physics',
+    enabled: false,
+    userScore: 76.0,
+    cutoffs: { 10: 82.0, 9: 72.57, 8: 61.14, 7: 52.0, 6: 44.0, 5: 37.0, 4: 30.0, 3: 25.0, 2: 20.0, 1: 15.0, 0: 0.0 },
+    verifiedGrades: [10, 9, 8]
+  },
+  {
+    code: 'MEP1000',
+    title: 'Engineering Graphics',
+    credits: 2,
+    maxMarks: 100,
+    cycle: 'chemistry',
+    enabled: true,
+    userScore: 78.5,
+    cutoffs: { 10: 83.72, 9: 76.0, 8: 68.21, 7: 60.0, 6: 52.0, 5: 45.0, 4: 38.0, 3: 30.0, 2: 25.0, 1: 20.0, 0: 0.0 },
+    verifiedGrades: [10, 9, 8]
+  }
+];
 
 // Presets for common IITD 1st-Year courses
 const COURSE_PRESETS = {
@@ -38,6 +153,19 @@ const COURSE_PRESETS = {
       }
     ]
   },
+  CML1002: {
+    code: 'CML1002',
+    title: 'Chemistry - Structure & Reactivity',
+    credits: 3,
+    target: 85.0,
+    assessments: [
+      { id: 'cq1', name: 'Quiz 1', date: 'Sep 2026', weight: 10, achieved: null, total: 10 },
+      { id: 'midsem', name: 'Mid Semester Exam', date: 'Oct 2026', weight: 30, achieved: null, total: 30 },
+      { id: 'cq2', name: 'Quiz 2', date: 'Oct 2026', weight: 10, achieved: null, total: 10 },
+      { id: 'tut', name: 'Tutorial Quizzes', date: 'Continuous', weight: 10, achieved: null, total: 10 },
+      { id: 'major', name: 'Major Exam', date: 'Nov 2026', weight: 40, achieved: null, total: 40 }
+    ]
+  },
   CMP1000: {
     code: 'CMP1000',
     title: 'Chemistry Laboratory',
@@ -65,6 +193,19 @@ const COURSE_PRESETS = {
       { id: 'major_lab', name: 'End-Sem Lab Practical & Viva', date: 'End of Semester', weight: 25, achieved: null, total: 50 }
     ]
   },
+  MTL1001: {
+    code: 'MTL1001',
+    title: 'Calculus & Linear Algebra',
+    credits: 4,
+    target: 85.0,
+    assessments: [
+      { id: 'q1', name: 'Quiz 1', date: 'Sep 2026', weight: 10, achieved: null, total: 10 },
+      { id: 'mid', name: 'Mid Semester', date: 'Oct 2026', weight: 30, achieved: null, total: 30 },
+      { id: 'q2', name: 'Quiz 2', date: 'Oct 2026', weight: 10, achieved: null, total: 10 },
+      { id: 'tut', name: 'Tutorial Tests', date: 'Throughout', weight: 10, achieved: null, total: 10 },
+      { id: 'major', name: 'Major Exam', date: 'Nov 2026', weight: 40, achieved: null, total: 40 }
+    ]
+  },
   MTL100: {
     code: 'MTL100',
     title: 'Calculus',
@@ -78,6 +219,18 @@ const COURSE_PRESETS = {
       { id: 'major', name: 'Major Exam', date: 'Nov 2026', weight: 40, achieved: null, total: 40 }
     ]
   },
+  COL1000: {
+    code: 'COL1000',
+    title: 'Introduction to Computer Science',
+    credits: 4,
+    target: 85.0,
+    assessments: [
+      { id: 'lab', name: 'Weekly Lab Assignments', date: 'Continuous', weight: 20, achieved: null, total: 100 },
+      { id: 'mid', name: 'Mid Semester Exam', date: 'Oct 2026', weight: 25, achieved: null, total: 50 },
+      { id: 'pract', name: 'Lab Practical Exam', date: 'Nov 2026', weight: 15, achieved: null, total: 30 },
+      { id: 'major', name: 'Major Exam', date: 'Nov 2026', weight: 40, achieved: null, total: 80 }
+    ]
+  },
   COL100: {
     code: 'COL100',
     title: 'Introduction to Computer Science',
@@ -88,6 +241,19 @@ const COURSE_PRESETS = {
       { id: 'mid', name: 'Mid Semester Exam', date: 'Oct 2026', weight: 25, achieved: null, total: 50 },
       { id: 'pract', name: 'Lab Practical Exam', date: 'Nov 2026', weight: 15, achieved: null, total: 30 },
       { id: 'major', name: 'Major Exam', date: 'Nov 2026', weight: 40, achieved: null, total: 80 }
+    ]
+  },
+  ELL1000: {
+    code: 'ELL1000',
+    title: 'Introduction to Electrical Engineering',
+    credits: 4,
+    target: 85.0,
+    assessments: [
+      { id: 'q1', name: 'Quiz 1', date: 'Sep 2026', weight: 10, achieved: null, total: 20 },
+      { id: 'mid', name: 'Mid Semester', date: 'Oct 2026', weight: 30, achieved: null, total: 60 },
+      { id: 'q2', name: 'Quiz 2', date: 'Oct 2026', weight: 10, achieved: null, total: 20 },
+      { id: 'lab', name: 'Lab Experiments', date: 'Continuous', weight: 15, achieved: null, total: 50 },
+      { id: 'major', name: 'Major Exam', date: 'Nov 2026', weight: 35, achieved: null, total: 70 }
     ]
   },
   ELL100: {
@@ -103,6 +269,19 @@ const COURSE_PRESETS = {
       { id: 'major', name: 'Major Exam', date: 'Nov 2026', weight: 35, achieved: null, total: 70 }
     ]
   },
+  PYL1001: {
+    code: 'PYL1001',
+    title: 'Electromagnetic Waves and Quantum Mechanics',
+    credits: 3,
+    target: 85.0,
+    assessments: [
+      { id: 'cq1', name: 'Common Quiz 1', date: 'Sep 2026', weight: 10, achieved: null, total: 15 },
+      { id: 'mid', name: 'Mid Semester', date: 'Oct 2026', weight: 30, achieved: null, total: 40 },
+      { id: 'cq2', name: 'Common Quiz 2', date: 'Oct 2026', weight: 10, achieved: null, total: 15 },
+      { id: 'tut', name: 'Tutorial Quizzes', date: 'Continuous', weight: 10, achieved: null, total: 25 },
+      { id: 'major', name: 'Major Exam', date: 'Nov 2026', weight: 40, achieved: null, total: 60 }
+    ]
+  },
   PYL100: {
     code: 'PYL100',
     title: 'Electromagnetic Waves and Quantum Mechanics',
@@ -114,6 +293,40 @@ const COURSE_PRESETS = {
       { id: 'cq2', name: 'Common Quiz 2', date: 'Oct 2026', weight: 10, achieved: null, total: 15 },
       { id: 'tut', name: 'Tutorial Quizzes', date: 'Continuous', weight: 10, achieved: null, total: 25 },
       { id: 'major', name: 'Major Exam', date: 'Nov 2026', weight: 40, achieved: null, total: 60 }
+    ]
+  },
+  PYP1000: {
+    code: 'PYP1000',
+    title: 'Physics Laboratory',
+    credits: 2,
+    target: 85.0,
+    assessments: [
+      { id: 'lab_eval', name: 'Continuous Lab Work & Viva', date: 'Weekly Experiments', weight: 50, achieved: null, total: 80 },
+      { id: 'reports', name: 'Reports & Logbook', date: 'Continuous', weight: 20, achieved: null, total: 40 },
+      { id: 'major_exam', name: 'End Semester Lab Practical & Viva', date: 'Nov 2026', weight: 30, achieved: null, total: 40 }
+    ]
+  },
+  MEP1000: {
+    code: 'MEP1000',
+    title: 'Engineering Graphics',
+    credits: 2,
+    target: 85.0,
+    assessments: [
+      { id: 'cad_labs', name: 'Weekly Drafting & CAD Exercises', date: 'Continuous', weight: 40, achieved: null, total: 100 },
+      { id: 'midsem', name: 'Mid Semester Practical Evaluation', date: 'Oct 2026', weight: 20, achieved: null, total: 50 },
+      { id: 'project', name: 'Term Modeling Project', date: 'Nov 2026', weight: 10, achieved: null, total: 25 },
+      { id: 'major', name: 'Major Practical Exam', date: 'Nov 2026', weight: 30, achieved: null, total: 75 }
+    ]
+  },
+  MEP1001: {
+    code: 'MEP1001',
+    title: 'Product Realization through Manufacturing',
+    credits: 2,
+    target: 85.0,
+    assessments: [
+      { id: 'shop_pract', name: 'Workshop Practical Jobs (Foundry/Welding/Machining)', date: 'Weekly', weight: 50, achieved: null, total: 100 },
+      { id: 'viva', name: 'Continuous Viva & Safety Assessments', date: 'Throughout', weight: 20, achieved: null, total: 40 },
+      { id: 'major_shop', name: 'Major Practical & Comprehensive Viva', date: 'Nov 2026', weight: 30, achieved: null, total: 60 }
     ]
   },
   APL100: {
@@ -144,11 +357,14 @@ class AcademicRunnerApp {
     }
 
     this.courses = this.loadCourses();
+    // Ensure all enrolled courses have cutoffs initialized from official baselines or defaults
+    this.courses.forEach(c => this.ensureCourseCutoffs(c));
+    this.cutoffFilterQuery = '';
     this.activeCourseId = localStorage.getItem(ACTIVE_COURSE_KEY) || localStorage.getItem('iitd_runner_active_course_v2') || 'home';
     this.simulatedValues = {};
     
-    // Ensure activeCourseId is valid ('home' or existing course id)
-    if (this.courses.length === 0 || (this.activeCourseId !== 'home' && !this.courses.some(c => c.id === this.activeCourseId))) {
+    // Ensure activeCourseId is valid ('home', 'cgpa' or existing course id)
+    if (this.courses.length === 0 || (this.activeCourseId !== 'home' && this.activeCourseId !== 'cgpa' && !this.courses.some(c => c.id === this.activeCourseId))) {
       this.activeCourseId = this.courses.length > 0 ? this.courses[0].id : 'home';
     }
 
@@ -162,6 +378,26 @@ class AcademicRunnerApp {
         });
       }
     });
+  }
+
+  ensureCourseCutoffs(course) {
+    if (!course) return;
+    if (course.cutoffs && Object.keys(course.cutoffs).length >= 11) {
+      return;
+    }
+    const cleanCode = (course.code || '').trim().toUpperCase();
+    const official = OFFICIAL_COURSE_CUTOFFS.find(o => o.code === cleanCode);
+    if (official) {
+      course.cutoffs = JSON.parse(JSON.stringify(official.cutoffs));
+      course.verifiedGrades = official.verifiedGrades ? [...official.verifiedGrades] : [];
+      course.maxMarks = official.maxMarks || 100;
+    } else {
+      course.cutoffs = {
+        10: 82.0, 9: 72.0, 8: 62.0, 7: 52.0, 6: 42.0, 5: 35.0, 4: 30.0, 3: 25.0, 2: 20.0, 1: 15.0, 0: 0.0
+      };
+      course.verifiedGrades = [];
+      course.maxMarks = 100;
+    }
   }
 
   loadCourses() {
@@ -185,18 +421,44 @@ class AcademicRunnerApp {
     localStorage.setItem(ACTIVE_COURSE_KEY, this.activeCourseId);
   }
 
+  loadCutoffCourses() {
+    try {
+      const stored = localStorage.getItem(CUTOFFS_STORAGE_KEY);
+      if (stored !== null) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Merge with official baseline if missing any course
+          const existingCodes = new Set(parsed.map(c => c.code));
+          OFFICIAL_COURSE_CUTOFFS.forEach(official => {
+            if (!existingCodes.has(official.code)) {
+              parsed.push(JSON.parse(JSON.stringify(official)));
+            }
+          });
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.error('Failed to parse stored cutoffs:', e);
+    }
+    return JSON.parse(JSON.stringify(OFFICIAL_COURSE_CUTOFFS));
+  }
+
+  saveCutoffCourses() {
+    localStorage.setItem(CUTOFFS_STORAGE_KEY, JSON.stringify(this.cutoffCourses));
+  }
+
   getActiveCourse() {
     if (this.courses.length === 0) {
       return null;
     }
-    if (this.activeCourseId === 'home') {
+    if (this.activeCourseId === 'home' || this.activeCourseId === 'cgpa') {
       return this.courses[0];
     }
     return this.courses.find(c => c.id === this.activeCourseId) || this.courses[0];
   }
 
   setActiveCourse(courseId) {
-    if (courseId === 'home' || this.courses.some(c => c.id === courseId)) {
+    if (courseId === 'home' || courseId === 'cgpa' || this.courses.some(c => c.id === courseId)) {
       this.activeCourseId = courseId;
       this.simulatedValues = {};
       this.saveCourses();
@@ -628,11 +890,18 @@ class AcademicRunnerApp {
     this.renderCourseTabs();
     const homeSection = document.getElementById('homeCockpitSection');
     const singleSection = document.getElementById('singleCourseSection');
+    const cgpaSection = document.getElementById('cgpaCutoffsSection');
 
-    if (this.activeCourseId === 'home' || this.courses.length === 0) {
+    if (this.activeCourseId === 'cgpa') {
+      if (homeSection) homeSection.style.display = 'none';
+      if (singleSection) singleSection.style.display = 'none';
+      if (cgpaSection) cgpaSection.style.display = 'block';
+      this.renderCgpaSection();
+    } else if (this.activeCourseId === 'home' || this.courses.length === 0) {
       this.activeCourseId = 'home';
       if (homeSection) homeSection.style.display = 'block';
       if (singleSection) singleSection.style.display = 'none';
+      if (cgpaSection) cgpaSection.style.display = 'none';
       this.renderHomeCockpit();
     } else {
       const course = this.getActiveCourse();
@@ -643,6 +912,7 @@ class AcademicRunnerApp {
       }
       if (homeSection) homeSection.style.display = 'none';
       if (singleSection) singleSection.style.display = 'block';
+      if (cgpaSection) cgpaSection.style.display = 'none';
       this.renderHeaderBanner();
       this.renderTelemetry();
       this.renderAssessmentCards();
@@ -655,6 +925,8 @@ class AcademicRunnerApp {
     if (!listEl) return;
 
     const isHomeActive = this.activeCourseId === 'home' || this.courses.length === 0;
+    const isCgpaActive = this.activeCourseId === 'cgpa';
+
     const homeTabHtml = `
       <div class="course-tab-item home-tab ${isHomeActive ? 'active' : ''}" data-course-id="home">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -662,6 +934,15 @@ class AcademicRunnerApp {
           <polyline points="9 22 9 12 15 12 15 22"></polyline>
         </svg>
         <span>HOME // ALL SUBJECTS</span>
+      </div>
+    `;
+
+    const cgpaTabHtml = `
+      <div class="course-tab-item cgpa-tab ${isCgpaActive ? 'active' : ''}" data-course-id="cgpa">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M18 20V10M12 20V4M6 20v-6"></path>
+        </svg>
+        <span>GRADE CUTOFFS & CGPA</span>
       </div>
     `;
 
@@ -681,7 +962,7 @@ class AcademicRunnerApp {
       `;
     }).join('');
 
-    listEl.innerHTML = homeTabHtml + coursesTabsHtml;
+    listEl.innerHTML = homeTabHtml + cgpaTabHtml + coursesTabsHtml;
   }
 
   renderHomeCockpit() {
@@ -1445,6 +1726,600 @@ class AcademicRunnerApp {
     }, 2800);
   }
 
+  getGradeLetter(point) {
+    const pt = Math.round(Number(point));
+    switch (pt) {
+      case 10: return 'A';
+      case 9: return 'A-';
+      case 8: return 'B';
+      case 7: return 'B-';
+      case 6: return 'C';
+      case 5: return 'C-';
+      case 4: return 'D';
+      case 3: return 'E+';
+      case 2: return 'E';
+      case 1: return 'F+';
+      case 0: return 'F';
+      default: return pt >= 4 ? 'P' : 'F';
+    }
+  }
+
+  getCourseScore(course) {
+    if (course.scoreOverride !== undefined && course.scoreOverride !== null && course.scoreOverride !== '') {
+      return parseFloat(course.scoreOverride);
+    }
+    const stats = this.calculateCourseStats(course);
+    return parseFloat(stats.maxPossibleScore.toFixed(1));
+  }
+
+  calculateCourseGrade(course) {
+    this.ensureCourseCutoffs(course);
+    const score = this.getCourseScore(course);
+    const cutoffs = course.cutoffs || {};
+    const gradeLevels = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
+
+    // Find highest grade where score >= cutoff
+    let assignedGrade = 0;
+    for (let i = 0; i < gradeLevels.length; i++) {
+      const g = gradeLevels[i];
+      const cutoffVal = parseFloat(cutoffs[g]);
+      if (!isNaN(cutoffVal) && score >= cutoffVal) {
+        assignedGrade = g;
+        break;
+      }
+    }
+
+    const currentCutoff = parseFloat(cutoffs[assignedGrade]) || 0;
+    const nextHigherGrade = assignedGrade < 10 ? assignedGrade + 1 : null;
+    const nextCutoff = nextHigherGrade !== null ? (parseFloat(cutoffs[nextHigherGrade]) || 0) : null;
+    const marginToHigher = nextCutoff !== null ? Math.max(0, nextCutoff - score) : null;
+
+    const lowerGrade = assignedGrade > 0 ? assignedGrade - 1 : null;
+    const lowerCutoff = lowerGrade !== null ? (parseFloat(cutoffs[lowerGrade]) || 0) : null;
+    const marginToLower = assignedGrade > 0 ? (score - currentCutoff) : 0;
+
+    // Relative position on ladder
+    const maxGrade10Cutoff = parseFloat(cutoffs[10]) || 80;
+    const relativePositionPct = Math.min(100, Math.max(0, (score / maxGrade10Cutoff) * 100));
+
+    return {
+      assignedGrade,
+      letterGrade: this.getGradeLetter(assignedGrade),
+      currentCutoff,
+      nextHigherGrade,
+      nextCutoff,
+      marginToHigher,
+      lowerGrade,
+      lowerCutoff,
+      marginToLower,
+      relativePositionPct,
+      score
+    };
+  }
+
+  calculateCgpaStats() {
+    let totalCredits = 0;
+    let totalPoints = 0;
+    let gradeDistribution = { 10: 0, 9: 0, 8: 0, 7: 0, 6: 0, 5: 0, 4: 0, 3: 0, 2: 0, 1: 0, 0: 0 };
+    let easiestJump = null;
+    let minMarginToHigher = 999999;
+
+    this.courses.forEach(course => {
+      const credits = parseFloat(course.credits) || 0;
+      const gradeInfo = this.calculateCourseGrade(course);
+      course.computedGrade = gradeInfo;
+
+      totalCredits += credits;
+      totalPoints += (gradeInfo.assignedGrade * credits);
+      gradeDistribution[gradeInfo.assignedGrade] = (gradeDistribution[gradeInfo.assignedGrade] || 0) + 1;
+
+      if (gradeInfo.nextHigherGrade !== null && gradeInfo.marginToHigher !== null && gradeInfo.marginToHigher > 0) {
+        if (gradeInfo.marginToHigher < minMarginToHigher) {
+          minMarginToHigher = gradeInfo.marginToHigher;
+          easiestJump = {
+            code: course.code,
+            title: course.title,
+            currentGrade: gradeInfo.assignedGrade,
+            targetGrade: gradeInfo.nextHigherGrade,
+            marginNeeded: gradeInfo.marginToHigher,
+            credits: credits
+          };
+        }
+      }
+    });
+
+    const sgpa = totalCredits > 0 ? (totalPoints / totalCredits) : 0.0;
+
+    let jumpBoostText = 'Smallest gap to the next higher grade tier.';
+    if (easiestJump && totalCredits > 0) {
+      const boost = (easiestJump.credits / totalCredits);
+      const newSgpa = sgpa + boost;
+      jumpBoostText = `Needs +${easiestJump.marginNeeded.toFixed(2)} pts in ${easiestJump.code} for Grade ${easiestJump.targetGrade} [${this.getGradeLetter(easiestJump.targetGrade)}] (+${boost.toFixed(2)} SGPA → ${newSgpa.toFixed(2)})`;
+    }
+
+    return {
+      sgpa,
+      totalCredits,
+      totalPoints,
+      gradeDistribution,
+      activeCourseCount: this.courses.length,
+      easiestJump,
+      jumpBoostText
+    };
+  }
+
+  renderCgpaSection() {
+    const stats = this.calculateCgpaStats();
+
+    // Update Banner & Global HUD Elements
+    const activeCountEl = document.getElementById('cgpaActiveCountText');
+    const totalCreditsBannerEl = document.getElementById('cgpaTotalCreditsText');
+    const valueDisplayEl = document.getElementById('cgpaValueDisplay');
+    const statusPillEl = document.getElementById('cgpaStatusPill');
+    const creditsSumEl = document.getElementById('cgpaCreditsSum');
+    const pointsSumEl = document.getElementById('cgpaPointsSum');
+    const progressFillEl = document.getElementById('cgpaProgressFill');
+
+    const statCreditsEl = document.getElementById('statCgpaTotalCredits');
+    const statPointsEl = document.getElementById('statCgpaTotalPoints');
+    const statJumpTitleEl = document.getElementById('statCgpaNextJumpTitle');
+    const statJumpDescEl = document.getElementById('statCgpaNextJumpDesc');
+
+    if (activeCountEl) activeCountEl.textContent = `${stats.activeCourseCount} ENROLLED SUBJECTS`;
+    if (totalCreditsBannerEl) totalCreditsBannerEl.textContent = `${stats.totalCredits} REGISTERED CREDITS`;
+    if (valueDisplayEl) {
+      valueDisplayEl.textContent = stats.totalCredits > 0 ? stats.sgpa.toFixed(2) : '--.--';
+      if (stats.sgpa >= 9.0) {
+        valueDisplayEl.style.color = 'var(--neon-volt)';
+        valueDisplayEl.style.textShadow = '0 0 25px var(--neon-volt-glow)';
+      } else if (stats.sgpa >= 8.0) {
+        valueDisplayEl.style.color = 'var(--neon-cyan)';
+        valueDisplayEl.style.textShadow = '0 0 25px var(--neon-cyan-glow)';
+      } else if (stats.sgpa >= 7.0) {
+        valueDisplayEl.style.color = 'var(--neon-amber)';
+        valueDisplayEl.style.textShadow = '0 0 25px var(--neon-amber-glow)';
+      } else {
+        valueDisplayEl.style.color = 'var(--neon-crimson)';
+        valueDisplayEl.style.textShadow = '0 0 25px var(--neon-crimson-glow)';
+      }
+    }
+
+    if (statusPillEl) {
+      if (stats.totalCredits === 0) {
+        statusPillEl.textContent = '[ NO COURSES ENROLLED ]';
+        statusPillEl.className = 'status-pill';
+      } else if (stats.sgpa >= 9.0) {
+        statusPillEl.textContent = '[ DISTINCTION / HIGH HONORS ]';
+        statusPillEl.className = 'status-pill safe';
+      } else if (stats.sgpa >= 8.0) {
+        statusPillEl.textContent = '[ FIRST DIVISION WITH HONORS ]';
+        statusPillEl.className = 'status-pill safe';
+      } else if (stats.sgpa >= 6.75) {
+        statusPillEl.textContent = '[ FIRST DIVISION ]';
+        statusPillEl.className = 'status-pill warning';
+      } else {
+        statusPillEl.textContent = '[ ATTENTION REQUIRED ]';
+        statusPillEl.className = 'status-pill critical';
+      }
+    }
+
+    if (creditsSumEl) creditsSumEl.textContent = stats.totalCredits;
+    if (pointsSumEl) pointsSumEl.textContent = stats.totalPoints.toFixed(1);
+
+    if (progressFillEl) {
+      const pct = Math.min(100, Math.max(0, (stats.sgpa / 10.0) * 100));
+      progressFillEl.style.width = `${pct}%`;
+    }
+
+    if (statCreditsEl) statCreditsEl.textContent = `${stats.totalCredits} CR`;
+    if (statPointsEl) statPointsEl.textContent = `${stats.totalPoints.toFixed(1)} PTS`;
+
+    if (statJumpTitleEl) {
+      if (stats.easiestJump) {
+        statJumpTitleEl.textContent = `${stats.easiestJump.code} (+${stats.easiestJump.marginNeeded.toFixed(2)})`;
+      } else {
+        statJumpTitleEl.textContent = 'NONE';
+      }
+    }
+
+    if (statJumpDescEl) {
+      statJumpDescEl.textContent = stats.jumpBoostText;
+    }
+
+    // Render Grade Distribution Chips
+    this.renderGradeDistributionBar(stats.gradeDistribution);
+
+    // Render Cutoff Cards
+    this.renderCutoffCards();
+  }
+
+  renderGradeDistributionBar(dist) {
+    const barEl = document.getElementById('gradeDistributionBar');
+    if (!barEl) return;
+
+    let html = `<span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);font-weight:700;">// GRADE SUMMARY:</span>`;
+    const levels = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
+    levels.forEach(g => {
+      const count = dist[g] || 0;
+      html += `
+        <div class="grade-dist-chip ${count > 0 ? 'active' : ''}">
+          <span>GR ${g} [${this.getGradeLetter(g)}]:</span>
+          <span class="grade-dist-count">${count}</span>
+        </div>
+      `;
+    });
+    barEl.innerHTML = html;
+  }
+
+  renderCutoffCards() {
+    const container = document.getElementById('cutoffCoursesContainer');
+    if (!container) return;
+
+    if (this.courses.length === 0) {
+      container.innerHTML = `
+        <div class="cgpa-empty-state tactical-card-corners">
+          <span class="hud-corner-crosshair tl"></span>
+          <span class="hud-corner-crosshair tr"></span>
+          <span class="hud-corner-crosshair bl"></span>
+          <span class="hud-corner-crosshair br"></span>
+          <div class="cgpa-empty-state-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+          </div>
+          <h3 class="cgpa-empty-state-title">// NO SUBJECTS ENROLLED IN DASHBOARD</h3>
+          <p class="cgpa-empty-state-desc">
+            Your CGPA and Grade Cutoff Matrix automatically derives <strong>marks</strong>, <strong>course name</strong>, and <strong>credit per course</strong> directly from the subjects you enroll on the dashboard.
+          </p>
+
+          <div style="font-family:var(--font-mono);font-size:10.5px;color:var(--text-muted);margin-bottom:12px;letter-spacing:0.08em;">
+            QUICK ENROLL FIRST-YEAR SUBJECTS WITH CROWD-SOURCED CUTOFFS:
+          </div>
+
+          <div class="cgpa-preset-enroll-grid">
+            <button type="button" class="preset-enroll-btn" data-preset="CML1001">+ CML1001 (3 CR)</button>
+            <button type="button" class="preset-enroll-btn" data-preset="CML1002">+ CML1002 (3 CR)</button>
+            <button type="button" class="preset-enroll-btn" data-preset="MTL1001">+ MTL1001 (4 CR)</button>
+            <button type="button" class="preset-enroll-btn" data-preset="ELL1000">+ ELL1000 (4 CR)</button>
+            <button type="button" class="preset-enroll-btn" data-preset="CMP1000">+ CMP1000 (2 CR)</button>
+            <button type="button" class="preset-enroll-btn" data-preset="PYP1000">+ PYP1000 (2 CR)</button>
+            <button type="button" class="preset-enroll-btn" data-preset="MEP1001">+ MEP1001 (2 CR)</button>
+            <button type="button" class="preset-enroll-btn" data-preset="PYL1001">+ PYL1001 (3 CR)</button>
+            <button type="button" class="preset-enroll-btn" data-preset="COL1000">+ COL1000 (4 CR)</button>
+            <button type="button" class="preset-enroll-btn" data-preset="MEP1000">+ MEP1000 (2 CR)</button>
+          </div>
+
+          <button class="tactical-btn primary" id="openAddCourseFromEmptyBtn" style="margin-top:10px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>+ ENROLL NEW SUBJECT</span>
+          </button>
+        </div>
+      `;
+      return;
+    }
+
+    const query = (this.cutoffFilterQuery || '').trim().toLowerCase();
+    const filtered = this.courses.filter(c => {
+      if (!query) return true;
+      return c.code.toLowerCase().includes(query) || c.title.toLowerCase().includes(query);
+    });
+
+    if (filtered.length === 0) {
+      container.innerHTML = `
+        <div style="padding:40px;text-align:center;background:var(--bg-surface-1);border:1px dashed var(--border-mid);font-family:var(--font-mono);color:var(--text-mid);">
+          NO ENROLLED SUBJECTS MATCHING "${this.cutoffFilterQuery.toUpperCase()}" // CLEAR SEARCH TO VIEW ALL
+        </div>
+      `;
+      return;
+    }
+
+    const gradeLevels = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
+
+    const cardsHtml = filtered.map(course => {
+      this.ensureCourseCutoffs(course);
+      const stats = this.calculateCourseStats(course);
+      const autoScore = parseFloat(stats.maxPossibleScore.toFixed(1));
+      const isOverridden = course.scoreOverride !== undefined && course.scoreOverride !== null && course.scoreOverride !== '';
+      const activeScore = isOverridden ? parseFloat(course.scoreOverride) : autoScore;
+      const gradeInfo = course.computedGrade || this.calculateCourseGrade(course);
+      const verifiedSet = new Set(course.verifiedGrades || []);
+
+      // Delta to higher and lower
+      let marginStripHtml = '';
+      if (gradeInfo.assignedGrade === 10) {
+        marginStripHtml = `
+          <div class="margin-text-item">
+            <span>★ <strong style="color:var(--neon-volt)">GRADE 10 [A] ACHIEVED</strong> (Marks: ${activeScore.toFixed(1)} / Cutoff: ${gradeInfo.currentCutoff})</span>
+          </div>
+          <div class="margin-text-item">
+            <span>▼ Cushion above Grade 9 (${course.cutoffs[9] || 0}): <strong style="color:var(--neon-volt)">+${(activeScore - (course.cutoffs[9] || 0)).toFixed(2)} pts buffer</strong></span>
+          </div>
+        `;
+      } else {
+        marginStripHtml = `
+          <div class="margin-text-item">
+            <span>▲ TARGET GRADE ${gradeInfo.nextHigherGrade} [${this.getGradeLetter(gradeInfo.nextHigherGrade)}]: <strong style="color:var(--neon-cyan)">${gradeInfo.marginToHigher.toFixed(2)} pts needed</strong> (Cutoff: ${gradeInfo.nextCutoff})</span>
+          </div>
+          <div class="margin-text-item">
+            <span>▼ Cushion above current floor [${gradeInfo.assignedGrade}]: <strong style="color:var(--neon-volt)">+${gradeInfo.marginToLower.toFixed(2)} pts</strong> (Cutoff: ${gradeInfo.currentCutoff})</span>
+          </div>
+        `;
+      }
+
+      // 11 column cutoffs
+      const cutoffColsHtml = gradeLevels.map(g => {
+        const isCurrent = gradeInfo.assignedGrade === g;
+        const isVerified = verifiedSet.has(g);
+        const cutoffVal = course.cutoffs[g] !== undefined ? course.cutoffs[g] : 0;
+        const diff = activeScore - cutoffVal;
+
+        let deltaClass = 'behind';
+        let deltaText = `${diff.toFixed(2)}`;
+        if (diff > 0) {
+          deltaClass = 'ahead';
+          deltaText = `+${diff.toFixed(2)}`;
+        } else if (diff === 0) {
+          deltaClass = 'exact';
+          deltaText = `0.00`;
+        }
+
+        return `
+          <div class="cutoff-grade-col ${isCurrent ? 'current-grade-highlight' : ''} ${isVerified ? 'verified-cutoff' : ''}" title="${isVerified ? 'Crowd-Sourced IITD Student Response' : 'Configurable Threshold'}">
+            <div class="cutoff-grade-badge">
+              <span>${g}</span>
+              <span class="cutoff-letter-sub">${this.getGradeLetter(g)}</span>
+              ${isVerified ? '<span class="verified-star" title="Crowd-Sourced IITD Data">★</span>' : ''}
+            </div>
+            <input 
+              type="number" 
+              step="0.01" 
+              class="cutoff-val-input" 
+              data-course-id="${course.id}" 
+              data-grade="${g}" 
+              value="${cutoffVal}" 
+            />
+            <div class="cutoff-delta-label ${deltaClass}">
+              ${deltaText}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const stripTone = gradeInfo.assignedGrade >= 9 ? 'volt' : gradeInfo.assignedGrade >= 8 ? 'cyan' : gradeInfo.assignedGrade >= 6 ? 'amber' : 'crimson';
+
+      return `
+        <div class="cutoff-course-card tactical-card-corners" data-course-id="${course.id}">
+          <span class="hud-corner-crosshair tl"></span>
+          <span class="hud-corner-crosshair tr"></span>
+          <span class="hud-corner-crosshair bl"></span>
+          <span class="hud-corner-crosshair br"></span>
+
+          <!-- Topbar (NO CHECKBOXES - DIRECT FROM ENROLLED SUBJECT) -->
+          <div class="cutoff-course-topbar">
+            <div class="cutoff-course-identity">
+              <div class="cutoff-course-badges">
+                <span class="course-code-pill">${course.code}</span>
+                <span class="course-credits-badge">[ ${course.credits} CREDITS ]</span>
+                <span class="course-synced-pill" title="Derived directly from your dashboard">[ENROLLED SUBJECT]</span>
+              </div>
+              <h3 class="cutoff-course-name">${course.title.toUpperCase()}</h3>
+              <button class="btn-micro jump-course-hud-btn" data-course-id="${course.id}" title="Open this subject's detailed marks & assessment roster">
+                OPEN ASSESSMENT HUD →
+              </button>
+            </div>
+
+            <div class="cutoff-course-inputs-group">
+              <div class="input-labeled-cell">
+                <label>COURSE CREDITS</label>
+                <div class="credits-input-wrap">
+                  <input type="number" min="1" max="10" step="1" value="${course.credits}" class="course-credits-input" data-course-id="${course.id}" title="Edit course credits (weights in CGPA)" />
+                  <span>CR</span>
+                </div>
+              </div>
+
+              <div class="input-labeled-cell score-cell">
+                <div class="score-label-row">
+                  <label>MARKS / SCORE</label>
+                  ${isOverridden ? `
+                    <button class="sync-dashboard-btn" data-course-id="${course.id}" title="Revert to auto-calculated dashboard score">RESET AUTO (${autoScore}%)</button>
+                  ` : `
+                    <span style="font-size:9.5px;color:var(--neon-volt);">[AUTO: ${autoScore}%]</span>
+                  `}
+                </div>
+                <div class="score-input-wrap">
+                  <input type="number" min="0" max="${course.maxMarks || 100}" step="0.1" value="${activeScore}" placeholder="Score" class="course-score-input" data-course-id="${course.id}" title="Marks from dashboard (edit to simulate different scores)" />
+                  <span>/ ${course.maxMarks || 100}</span>
+                </div>
+                <div class="score-eval-subtext">
+                  ${stats.totalWeightCompleted > 0 ? `${stats.totalWeightCompleted}% evaluated (${stats.totalEarned.toFixed(1)} pts earned)` : '100% pending (assumed full)'}
+                </div>
+              </div>
+
+              <div class="grade-result-cell grade-accent-${gradeInfo.assignedGrade}">
+                <div class="grade-result-label">ASSIGNED GRADE</div>
+                <div class="grade-result-value">${gradeInfo.assignedGrade} <span class="grade-letter">(${gradeInfo.letterGrade})</span></div>
+                <div class="grade-points-sub">${(gradeInfo.assignedGrade * course.credits).toFixed(1)} PTS (${course.credits} CR)</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Margin Strip -->
+          <div class="cutoff-margin-strip ${stripTone}">
+            <div class="margin-strip-content">
+              ${marginStripHtml}
+            </div>
+            <div class="course-grade-meter">
+              <div class="course-grade-meter-fill" style="width: ${gradeInfo.relativePositionPct}%;"></div>
+            </div>
+          </div>
+
+          <!-- Cutoff Inputs Grid -->
+          <div class="cutoff-grid-wrapper">
+            <div class="cutoff-grid-header">
+              <span class="grid-title">// EDITABLE GRADE CUTOFFS (10 DOWN TO 0)</span>
+              <div class="grid-tools">
+                <span class="verified-legend"><span class="verified-dot"></span> Crowd-Sourced Responses</span>
+                <button class="btn-micro reset-course-btn" data-course-id="${course.id}" title="Reset cutoffs to crowd-sourced baseline">RESET CUTOFFS</button>
+                <button class="btn-micro danger-micro delete-cutoff-course-btn" data-course-id="${course.id}" title="Remove this course from enrolled dashboard subjects">REMOVE</button>
+              </div>
+            </div>
+
+            <div class="cutoff-inputs-grid">
+              ${cutoffColsHtml}
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    container.innerHTML = cardsHtml;
+  }
+
+  updateCutoffValue(courseId, grade, val) {
+    const course = this.courses.find(c => c.id === courseId);
+    if (!course) return;
+
+    this.ensureCourseCutoffs(course);
+    const parsed = parseFloat(val);
+    course.cutoffs[grade] = !isNaN(parsed) ? parsed : 0;
+    this.saveCourses();
+    this.renderCgpaSection();
+    window.sfx.playInputTick();
+  }
+
+  updateCourseUserScore(courseId, scoreVal) {
+    const course = this.courses.find(c => c.id === courseId);
+    if (!course) return;
+
+    course.scoreOverride = scoreVal !== '' && !isNaN(scoreVal) ? parseFloat(scoreVal) : null;
+    this.saveCourses();
+    this.renderCgpaSection();
+    window.sfx.playInputTick();
+  }
+
+  updateCourseCredits(courseId, creditsVal) {
+    const course = this.courses.find(c => c.id === courseId);
+    if (!course) return;
+
+    course.credits = Math.max(1, parseInt(creditsVal) || 1);
+    this.saveCourses();
+    this.renderCourseTabs();
+    this.renderCgpaSection();
+    window.sfx.playInputTick();
+  }
+
+  syncFromDashboard(courseId) {
+    const course = this.courses.find(c => c.id === courseId);
+    if (!course) return;
+
+    delete course.scoreOverride;
+    this.saveCourses();
+    this.renderCgpaSection();
+    this.showToast(`SYNCED ${course.code} TO AUTO-CALCULATED MARKS`);
+    window.sfx.playSuccess();
+  }
+
+  resetCourseCutoffs(courseId) {
+    const course = this.courses.find(c => c.id === courseId);
+    if (!course) return;
+
+    const baseline = OFFICIAL_COURSE_CUTOFFS.find(o => o.code === course.code.toUpperCase());
+    if (baseline) {
+      course.cutoffs = JSON.parse(JSON.stringify(baseline.cutoffs));
+      course.verifiedGrades = [...baseline.verifiedGrades];
+      course.maxMarks = baseline.maxMarks;
+    } else {
+      course.cutoffs = {
+        10: 82.0, 9: 72.0, 8: 62.0, 7: 52.0, 6: 42.0, 5: 35.0, 4: 30.0, 3: 25.0, 2: 20.0, 1: 15.0, 0: 0.0
+      };
+      course.verifiedGrades = [];
+      course.maxMarks = 100;
+    }
+    delete course.scoreOverride;
+    this.saveCourses();
+    this.renderCgpaSection();
+    this.showToast(`CUTOFFS RESET FOR ${course.code}`);
+    window.sfx.playClick();
+  }
+
+  resetAllCutoffs() {
+    if (confirm('Reset all enrolled course cutoffs to crowd-sourced baselines? Any custom cutoffs you edited will be restored.')) {
+      this.courses.forEach(course => {
+        const baseline = OFFICIAL_COURSE_CUTOFFS.find(o => o.code === course.code.toUpperCase());
+        if (baseline) {
+          course.cutoffs = JSON.parse(JSON.stringify(baseline.cutoffs));
+          course.verifiedGrades = [...baseline.verifiedGrades];
+          course.maxMarks = baseline.maxMarks;
+        } else {
+          course.cutoffs = {
+            10: 82.0, 9: 72.0, 8: 62.0, 7: 52.0, 6: 42.0, 5: 35.0, 4: 30.0, 3: 25.0, 2: 20.0, 1: 15.0, 0: 0.0
+          };
+          course.verifiedGrades = [];
+          course.maxMarks = 100;
+        }
+        delete course.scoreOverride;
+      });
+      this.saveCourses();
+      this.renderCgpaSection();
+      this.showToast('ALL ENROLLED CUTOFFS RESTORED TO CROWD-SOURCED BASELINES');
+      window.sfx.playWarning();
+    }
+  }
+
+  enrollPresetCourse(code) {
+    const cleanCode = (code || '').trim().toUpperCase();
+    const preset = COURSE_PRESETS[cleanCode];
+    if (!preset) return;
+
+    if (this.courses.some(c => c.code.toUpperCase() === cleanCode)) {
+      this.showToast(`SUBJECT ${cleanCode} ALREADY ENROLLED`);
+      return;
+    }
+
+    const official = OFFICIAL_COURSE_CUTOFFS.find(o => o.code === cleanCode);
+    const cutoffs = official ? JSON.parse(JSON.stringify(official.cutoffs)) : {
+      10: 82.0, 9: 72.0, 8: 62.0, 7: 52.0, 6: 42.0, 5: 35.0, 4: 30.0, 3: 25.0, 2: 20.0, 1: 15.0, 0: 0.0
+    };
+
+    const newId = cleanCode.toLowerCase().replace(/[^a-z0-9]/g, '') + '_' + Date.now();
+    const newCourse = {
+      id: newId,
+      code: preset.code,
+      title: preset.title,
+      credits: preset.credits,
+      target: preset.target || 85.0,
+      assessments: JSON.parse(JSON.stringify(preset.assessments)),
+      cutoffs: cutoffs,
+      verifiedGrades: official ? [...official.verifiedGrades] : [],
+      maxMarks: official ? official.maxMarks : 100
+    };
+
+    this.courses.push(newCourse);
+    this.saveCourses();
+    this.render();
+    this.showToast(`ENROLLED ${cleanCode} // MARKS & CUTOFFS ONLINE`);
+    window.sfx.playSuccess();
+  }
+
+  openAddCourseModal() {
+    const modalOverlay = document.getElementById('addCourseModal');
+    if (modalOverlay) {
+      modalOverlay.classList.add('active');
+      window.sfx.playClick();
+    }
+  }
+
+  closeAddCourseModal() {
+    const modalOverlay = document.getElementById('addCourseModal');
+    if (modalOverlay) {
+      modalOverlay.classList.remove('active');
+      window.sfx.playClick();
+    }
+  }
+
   bindEvents() {
     // Target Slider and Inputs
     const targetSlider = document.getElementById('targetScoreSlider');
@@ -1485,13 +2360,14 @@ class AcademicRunnerApp {
         return;
       }
 
-      // Home Cockpit - Add Course Button or Tile
-      if (e.target.closest('#homeAddCourseBtn') || e.target.closest('#homeAddCardTrigger')) {
-        const modalOverlay = document.getElementById('addCourseModal');
-        if (modalOverlay) {
-          modalOverlay.classList.add('active');
-          window.sfx.playClick();
-        }
+      // Home Cockpit & CGPA Tab - Add Course Button or Empty State Action
+      if (
+        e.target.closest('#homeAddCourseBtn') || 
+        e.target.closest('#homeAddCardTrigger') ||
+        e.target.closest('#cgpaAddSubjectBtn') ||
+        e.target.closest('#openAddCourseFromEmptyBtn')
+      ) {
+        this.openAddCourseModal();
         return;
       }
 
@@ -1566,10 +2442,86 @@ class AcademicRunnerApp {
         this.openEditComponentModal(editCompBtn.dataset.assessmentId);
         return;
       }
+
+      // Jump to CGPA View
+      if (e.target.closest('#homeJumpCgpaBtn')) {
+        this.setActiveCourse('cgpa');
+        return;
+      }
+
+      // Reset All Cutoffs
+      if (e.target.closest('#resetAllCutoffsBtn')) {
+        this.resetAllCutoffs();
+        return;
+      }
+
+      // Quick Enroll Preset from CGPA Empty State
+      const presetEnrollBtn = e.target.closest('.preset-enroll-btn');
+      if (presetEnrollBtn) {
+        this.enrollPresetCourse(presetEnrollBtn.dataset.preset);
+        return;
+      }
+
+      // Jump to Course Telemetry HUD from Cutoff Card
+      const jumpCourseHudBtn = e.target.closest('.jump-course-hud-btn');
+      if (jumpCourseHudBtn) {
+        this.setActiveCourse(jumpCourseHudBtn.dataset.courseId);
+        return;
+      }
+
+      // Reset Individual Course Cutoffs
+      const resetCourseBtn = e.target.closest('.reset-course-btn');
+      if (resetCourseBtn) {
+        this.resetCourseCutoffs(resetCourseBtn.dataset.courseId);
+        return;
+      }
+
+      // Delete / Remove Course from Dashboard
+      const delCutoffBtn = e.target.closest('.delete-cutoff-course-btn');
+      if (delCutoffBtn) {
+        this.deleteCourse(delCutoffBtn.dataset.courseId);
+        return;
+      }
+
+      // Sync Score from Active Dashboard Course
+      const syncBtn = e.target.closest('.sync-dashboard-btn');
+      if (syncBtn) {
+        this.syncFromDashboard(syncBtn.dataset.courseId);
+        return;
+      }
     });
 
-    // Input changes on scores, weights, and subsections
+    // Input changes on scores, weights, subsections, and cutoffs
     document.addEventListener('input', (e) => {
+      // Cutoff Course Search Filter
+      if (e.target.id === 'cutoffSearchInput') {
+        this.cutoffFilterQuery = e.target.value.trim().toLowerCase();
+        this.renderCutoffCards();
+        return;
+      }
+
+      // Course Score Input in Cutoff Matrix
+      if (e.target.classList.contains('course-score-input')) {
+        const id = e.target.dataset.courseId;
+        this.updateCourseUserScore(id, e.target.value);
+        return;
+      }
+
+      // Course Credits Input in Cutoff Matrix
+      if (e.target.classList.contains('course-credits-input')) {
+        const id = e.target.dataset.courseId;
+        this.updateCourseCredits(id, e.target.value);
+        return;
+      }
+
+      // Grade Cutoff Margin Input (10 down to 0)
+      if (e.target.classList.contains('cutoff-val-input')) {
+        const id = e.target.dataset.courseId;
+        const grade = parseInt(e.target.dataset.grade);
+        this.updateCutoffValue(id, grade, e.target.value);
+        return;
+      }
+
       // Assessment Score / Total
       if (e.target.classList.contains('score-input') || e.target.classList.contains('total-input')) {
         const assessmentId = e.target.dataset.assessmentId;
@@ -1684,6 +2636,7 @@ class AcademicRunnerApp {
           target,
           assessments
         };
+        this.ensureCourseCutoffs(newCourse);
 
         this.courses.push(newCourse);
         this.activeCourseId = newId;
@@ -1784,6 +2737,40 @@ class AcademicRunnerApp {
       });
     }
 
+    // Upload / Import Telemetry JSON
+    const uploadBtn = document.getElementById('uploadDataBtn');
+    const uploadInput = document.getElementById('uploadJsonInput');
+    if (uploadBtn && uploadInput) {
+      uploadBtn.addEventListener('click', () => {
+        uploadInput.click();
+        window.sfx.playClick();
+      });
+
+      uploadInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+          const file = e.target.files[0];
+          this.handleJsonUpload(file);
+          uploadInput.value = '';
+        }
+      });
+
+      // Drag and drop support on upload button
+      uploadBtn.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadBtn.classList.add('drag-over');
+      });
+      uploadBtn.addEventListener('dragleave', () => {
+        uploadBtn.classList.remove('drag-over');
+      });
+      uploadBtn.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadBtn.classList.remove('drag-over');
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          this.handleJsonUpload(e.dataTransfer.files[0]);
+        }
+      });
+    }
+
     // Reset to Default Baseline
     const resetBtn = document.getElementById('resetDataBtn');
     if (resetBtn) {
@@ -1808,6 +2795,195 @@ class AcademicRunnerApp {
         if (resetBtn) resetBtn.click();
       });
     }
+
+  }
+
+  handleJsonUpload(file) {
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith('.json') && file.type && file.type !== 'application/json') {
+      this.showToast('ERROR: PLEASE SELECT A .JSON FILE');
+      window.sfx.playWarning();
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target.result;
+        if (!content || !content.trim()) {
+          this.showToast('ERROR: JSON FILE IS EMPTY');
+          window.sfx.playWarning();
+          return;
+        }
+
+        let parsed;
+        try {
+          parsed = JSON.parse(content);
+        } catch (parseErr) {
+          console.error('JSON parse error:', parseErr);
+          this.showToast('ERROR: INVALID JSON SYNTAX');
+          window.sfx.playWarning();
+          return;
+        }
+
+        let importedCourses = null;
+        let importedActiveId = null;
+
+        if (Array.isArray(parsed)) {
+          importedCourses = parsed;
+        } else if (parsed && typeof parsed === 'object') {
+          if (Array.isArray(parsed.courses)) {
+            importedCourses = parsed.courses;
+            if (parsed.activeCourseId) {
+              importedActiveId = parsed.activeCourseId;
+            }
+          } else if (Array.isArray(parsed.telemetry)) {
+            importedCourses = parsed.telemetry;
+          } else if (parsed.code || parsed.assessments) {
+            importedCourses = [parsed];
+          } else {
+            const vals = Object.values(parsed);
+            if (vals.length > 0 && vals.every(v => v && typeof v === 'object' && (v.code || v.assessments || v.title))) {
+              importedCourses = vals;
+            }
+          }
+        }
+
+        if (!importedCourses || !Array.isArray(importedCourses) || importedCourses.length === 0) {
+          this.showToast('ERROR: NO RECOGNIZED COURSE DATA IN JSON');
+          window.sfx.playWarning();
+          return;
+        }
+
+        // Sanitize and validate every course and its assessments
+        const sanitized = importedCourses.map((c, idx) => {
+          const code = String(c.code || `COURSE_${idx + 1}`).trim().toUpperCase();
+          const title = String(c.title || code).trim();
+          const credits = Math.max(1, Math.min(10, parseInt(c.credits) || 3));
+          const target = Math.max(0, Math.min(100, parseFloat(c.target) || 85.0));
+          const id = c.id && typeof c.id === 'string'
+            ? c.id
+            : `${code.toLowerCase().replace(/[^a-z0-9]/g, '')}_${Date.now()}_${idx}`;
+
+          let assessments = Array.isArray(c.assessments) ? c.assessments : [];
+          if (assessments.length === 0 && COURSE_PRESETS[code]) {
+            assessments = JSON.parse(JSON.stringify(COURSE_PRESETS[code].assessments));
+          }
+
+          const cleanAssessments = assessments.map((a, aIdx) => {
+            const aId = a.id && typeof a.id === 'string' ? a.id : `comp_${Date.now()}_${aIdx}`;
+            const aName = String(a.name || `Assessment ${aIdx + 1}`).trim();
+            const weight = Math.max(0, parseFloat(a.weight) || 10);
+            const total = a.total !== null && a.total !== undefined && !isNaN(a.total) && parseFloat(a.total) > 0 
+              ? parseFloat(a.total) 
+              : weight;
+            const achieved = a.achieved !== null && a.achieved !== undefined && !isNaN(a.achieved) && a.achieved !== ''
+              ? parseFloat(a.achieved) 
+              : null;
+            const date = String(a.date || 'Throughout Semester').trim();
+            const hasSubitems = Boolean(a.hasSubitems && Array.isArray(a.subitems) && a.subitems.length > 0);
+
+            let subitems = [];
+            if (hasSubitems) {
+              subitems = a.subitems.map((sub, sIdx) => ({
+                id: sub.id && typeof sub.id === 'string' ? sub.id : `sub_${Date.now()}_${sIdx}`,
+                name: String(sub.name || `Part ${sIdx + 1}`).trim(),
+                weight: Math.max(0, parseFloat(sub.weight) || (weight / a.subitems.length)),
+                achieved: sub.achieved !== null && sub.achieved !== undefined && !isNaN(sub.achieved) && sub.achieved !== ''
+                  ? parseFloat(sub.achieved)
+                  : null,
+                total: sub.total !== null && sub.total !== undefined && !isNaN(sub.total) && parseFloat(sub.total) > 0
+                  ? parseFloat(sub.total)
+                  : 10
+              }));
+            }
+
+            const itemObj = {
+              id: aId,
+              name: aName,
+              weight,
+              achieved,
+              total,
+              date,
+              hasSubitems,
+              subitems
+            };
+
+            if (hasSubitems) {
+              this.recalculateParentScore(itemObj);
+            }
+            return itemObj;
+          });
+
+          const courseObj = {
+            id,
+            code,
+            title,
+            credits,
+            target,
+            assessments: cleanAssessments
+          };
+
+          if (c.cutoffs && typeof c.cutoffs === 'object') {
+            courseObj.cutoffs = { ...c.cutoffs };
+          }
+          if (Array.isArray(c.verifiedGrades)) {
+            courseObj.verifiedGrades = [...c.verifiedGrades];
+          }
+          if (c.maxMarks) {
+            courseObj.maxMarks = parseFloat(c.maxMarks);
+          }
+          if (c.userScore !== undefined && c.userScore !== null) {
+            courseObj.userScore = parseFloat(c.userScore);
+          }
+
+          this.ensureCourseCutoffs(courseObj);
+          return courseObj;
+        });
+
+        if (sanitized.length === 0) {
+          this.showToast('ERROR: NO VALID COURSES EXTRACTED');
+          window.sfx.playWarning();
+          return;
+        }
+
+        const countStr = sanitized.length === 1 ? '1 course' : `${sanitized.length} courses`;
+        if (this.courses.length > 0) {
+          if (!confirm(`Import ${countStr} from JSON? This will replace your current active courses.`)) {
+            return;
+          }
+        }
+
+        this.courses = sanitized;
+        if (importedActiveId && this.courses.some(c => c.id === importedActiveId)) {
+          this.activeCourseId = importedActiveId;
+        } else if (this.activeCourseId === 'home' || this.activeCourseId === 'cgpa') {
+          // preserve home or cgpa active view
+        } else if (this.courses.length > 0) {
+          this.activeCourseId = this.courses[0].id;
+        } else {
+          this.activeCourseId = 'home';
+        }
+
+        this.saveCourses();
+        localStorage.setItem(INITIALIZED_KEY, 'true');
+        this.render();
+        this.showToast(`TELEMETRY LOADED // ${sanitized.length} SUBJECT(S) ONLINE`);
+        window.sfx.playSuccess();
+      } catch (err) {
+        console.error('Failed to import JSON telemetry:', err);
+        this.showToast('ERROR: FAILED TO PROCESS JSON FILE');
+        window.sfx.playWarning();
+      }
+    };
+
+    reader.onerror = () => {
+      this.showToast('ERROR: COULD NOT READ FILE');
+      window.sfx.playWarning();
+    };
+
+    reader.readAsText(file);
   }
 
   deleteCourse(courseId) {
