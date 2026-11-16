@@ -1797,6 +1797,35 @@ class AcademicRunnerApp {
     }
   }
 
+  // How much one mark in a paper is worth as a % of the whole course (weight / total)
+  perMarkCourseShare(weight, total) {
+    const w = parseFloat(weight);
+    const t = parseFloat(total);
+    if (!(w > 0) || !(t > 0)) return null;
+    const pct = w / t;
+    const digits = pct >= 1 ? 2 : pct >= 0.1 ? 3 : 4;
+    return parseFloat(pct.toFixed(digits)).toString();
+  }
+
+  perMarkTagHtml(weight, total, compact = false) {
+    const share = this.perMarkCourseShare(weight, total);
+    if (share === null) return '';
+    const title = `Each mark here is worth ${share}% of the final course score (${weight}% weight / ${total} marks)`;
+    return compact
+      ? `<span class="per-mark-tag compact" title="${title}">1 MARK = <strong>${share}%</strong></span>`
+      : `<span class="per-mark-tag" title="${title}">1 MARK = <strong>${share}%</strong> OF COURSE</span>`;
+  }
+
+  // Refresh the per-mark tags of one card in place (score/total/weight edits don't re-render cards)
+  refreshPerMarkTags(item, cardEl) {
+    const row = cardEl.querySelector('.per-mark-row');
+    if (row) row.innerHTML = this.perMarkTagHtml(item.weight, item.total || item.weight);
+    (item.subitems || []).forEach(sub => {
+      const slot = cardEl.querySelector(`.per-mark-slot[data-sub-id="${sub.id}"]`);
+      if (slot) slot.innerHTML = this.perMarkTagHtml(sub.weight, sub.total > 0 ? sub.total : 10, true);
+    });
+  }
+
   renderAssessmentCards() {
     const course = this.getActiveCourse();
     const container = document.getElementById('assessmentsContainer');
@@ -1943,6 +1972,8 @@ class AcademicRunnerApp {
                   ${dis}
                 />
               </div>
+
+              <div class="per-mark-row">${this.perMarkTagHtml(item.weight, item.total || item.weight)}</div>
             </div>
 
             <div class="item-diagnostics" id="diag-${item.id}">
@@ -2052,6 +2083,8 @@ class AcademicRunnerApp {
                         ${dis}
                       />
                     </div>
+
+                    <div class="per-mark-slot" data-sub-id="${sub.id}">${this.perMarkTagHtml(sub.weight, subMax, true)}</div>
                   </div>
                 `;
                 }).join('')}
@@ -2085,6 +2118,8 @@ class AcademicRunnerApp {
     const diagEl = document.getElementById(`diag-${assessmentId}`);
     const cardEl = document.getElementById(`card-${assessmentId}`);
     if (!item || !diagEl || !cardEl) return;
+
+    this.refreshPerMarkTags(item, cardEl);
 
     const isCompleted = item.achieved !== null && item.total !== null && item.total > 0;
     if (isCompleted) {

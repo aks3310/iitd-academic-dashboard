@@ -1021,6 +1021,36 @@ body::before {
   flex-wrap: wrap;
 }
 
+.per-mark-row {
+  flex: 1 1 100%;
+}
+
+.per-mark-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  background: var(--neon-cyan-dim);
+  border-left: 2px solid var(--neon-cyan);
+  padding: 3px 8px;
+  clip-path: var(--chamfer-sm);
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.per-mark-tag strong {
+  color: var(--neon-cyan);
+  font-weight: 700;
+}
+
+.per-mark-tag.compact {
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  padding: 2px 6px;
+  margin-top: 4px;
+}
+
 .input-field-wrap {
   display: flex;
   flex-direction: column;
