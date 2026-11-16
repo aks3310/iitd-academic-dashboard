@@ -121,7 +121,7 @@
             <span>SEMESTER PERFORMANCE & ERROR MARGINS</span>
           </h1>
           <div style="font-family:var(--font-mono);font-size:12px;color:var(--text-mid);">
-            STATUS: <span style="color:var(--neon-volt)" id="homeGlobalStatusText">ALL ENROLLED COURSES MONITORED</span> • <span id="homeTotalCreditsText">5 CREDITS ENROLLED</span>
+            CURRENT: <span style="color:var(--neon-cyan)" id="homeCurrentSemesterText">SEMESTER 1</span> • STATUS: <span style="color:var(--neon-volt)" id="homeGlobalStatusText">ALL ENROLLED COURSES MONITORED</span> • <span id="homeTotalCreditsText">5 CREDITS ENROLLED</span>
           </div>
         </div>
 
@@ -190,13 +190,22 @@
             <rect x="14" y="14" width="7" height="7"></rect>
             <rect x="3" y="14" width="7" height="7"></rect>
           </svg>
-          <span>ALL ENROLLED SUBJECTS // STATUS & MARGIN MATRIX</span>
+          <span>SUBJECTS BY SEMESTER // STATUS & MARGIN MATRIX</span>
         </div>
-        <div class="section-stats-summary" id="homeSummaryCourseCount">2 COURSES LOADED</div>
+        <div class="section-header-actions">
+          <div class="section-stats-summary" id="homeSummaryCourseCount">0 COURSES</div>
+          <button class="tactical-btn" id="addSemesterBtn" title="Start a new semester">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>NEW SEMESTER</span>
+          </button>
+        </div>
       </div>
 
-      <!-- Subject Cards Grid -->
-      <section class="home-subjects-grid" id="homeSubjectsGrid">
+      <!-- Semester groups, each with its own subject card grid -->
+      <section class="home-semester-groups" id="homeSubjectsGrid">
         <!-- Rendered reactively via app.js -->
       </section>
     </div>
@@ -227,6 +236,9 @@
         </h1>
         <div style="font-family:var(--font-mono);font-size:12px;color:var(--text-mid);">
           STATUS: <span style="color:var(--neon-volt)">ACADEMIC ENGAGEMENT ACTIVE</span> • <span id="subjectCreditsDisplay">3 CREDITS</span>
+        </div>
+        <div class="banner-semester-row" id="subjectSemesterRow">
+          <!-- Course semester & move control, rendered by app.js -->
         </div>
         <div class="banner-lock-row" id="subjectLockRow">
           <!-- Course marks lock state & toggle, rendered by app.js -->
@@ -465,17 +477,18 @@
           <span class="hud-corner-crosshair br"></span>
 
           <div class="cgpa-hero-header">
-            <div class="gauge-title">// PROJECTED SEMESTER SGPA / CGPA</div>
+            <div class="gauge-title">// PROJECTED CGPA // ALL SEMESTERS</div>
             <div class="status-pill safe" id="cgpaStatusPill">[ DISTINCTION ]</div>
           </div>
 
           <div class="cgpa-readout-center">
             <div class="cgpa-readout-sub">CREDIT-WEIGHTED PERFORMANCE INDEX</div>
             <div class="cgpa-readout-huge" id="cgpaValueDisplay">--.--</div>
-            <div class="cgpa-readout-scale">/ 10.00 SGPA</div>
+            <div class="cgpa-readout-scale">/ 10.00 CGPA</div>
             <div class="cgpa-readout-caption" id="cgpaSummaryCaption">
               Calculated across <strong style="color:var(--neon-volt)" id="cgpaCreditsSum">0</strong> registered credits • <span id="cgpaPointsSum">0.0</span> total grade points.
             </div>
+            <div class="cgpa-semester-breakdown" id="cgpaSemesterBreakdown" aria-label="SGPA by semester"></div>
           </div>
 
           <!-- Segmented CGPA Bar -->
@@ -502,7 +515,7 @@
               <span class="stat-cell-code">SEMESTER.CR</span>
             </div>
             <div class="stat-cell-val accent-volt" id="statCgpaTotalCredits">0 CR</div>
-            <div class="stat-cell-desc">Sum of credits for all subjects currently added to your dashboard.</div>
+            <div class="stat-cell-desc">Sum of credits for all subjects across every semester.</div>
           </div>
 
           <div class="stat-cell">
@@ -636,6 +649,11 @@
         <div class="form-row">
           <label class="form-label" for="newCourseTitle">Course Full Title</label>
           <input type="text" id="newCourseTitle" class="form-input" placeholder="e.g. Chemistry Laboratory" required />
+        </div>
+
+        <div class="form-row">
+          <label class="form-label" for="newCourseSemester">Semester</label>
+          <select id="newCourseSemester" class="form-input"></select>
         </div>
 
         <div class="form-row-2col">
