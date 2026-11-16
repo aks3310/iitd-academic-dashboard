@@ -664,6 +664,90 @@ class AcademicRunnerApp {
     window.sfx.playClick();
   }
 
+  // Drag a course (home card or ribbon tab) onto another semester to move it.
+  // Uses the same move path as the Semester dropdown, so the lock rule and
+  // saving behave identically.
+  setupCourseDragAndDrop() {
+    const DRAG_SOURCE = '.home-subject-card[data-course-id], .course-tab-item[draggable="true"][data-course-id]';
+    const DROP_ZONE = '.semester-group[data-semester-id], .ribbon-semester-group[data-semester-id]';
+    const asElement = (node) => (node && node.nodeType === 1 ? node : node?.parentElement) || null;
+    let dragCourse = null;
+
+    const cleanup = () => {
+      dragCourse = null;
+      document.body.classList.remove('course-drag-active');
+      document.querySelectorAll('.is-dragging, .drop-target-active, .drag-origin').forEach(el => {
+        el.classList.remove('is-dragging', 'drop-target-active', 'drag-origin');
+      });
+    };
+
+    const zoneFor = (e) => {
+      const zone = asElement(e.target)?.closest(DROP_ZONE);
+      if (!zone || !dragCourse || zone.dataset.semesterId === dragCourse.semesterId) return null;
+      return zone;
+    };
+
+    document.addEventListener('dragstart', (e) => {
+      const source = asElement(e.target)?.closest(DRAG_SOURCE);
+      if (!source) return;
+      const course = this.courses.find(c => c.id === source.dataset.courseId);
+      if (!course) return;
+      if (this.isCourseLocked(course)) {
+        e.preventDefault();
+        this.showToast(`${course.code} IS LOCKED // UNLOCK TO MOVE IT`);
+        window.sfx.playWarning();
+        return;
+      }
+      if (this.semesters.length < 2) {
+        e.preventDefault();
+        this.showToast('ADD ANOTHER SEMESTER TO MOVE COURSES BETWEEN THEM');
+        return;
+      }
+      dragCourse = course;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', course.code); // Firefox needs data to start a drag
+      // Defer so the drag image is captured before the source is dimmed
+      requestAnimationFrame(() => {
+        if (dragCourse !== course) return;
+        source.classList.add('is-dragging');
+        document.body.classList.add('course-drag-active');
+        document.querySelectorAll(DROP_ZONE).forEach(zone => {
+          if (zone.dataset.semesterId === course.semesterId) zone.classList.add('drag-origin');
+        });
+      });
+    });
+
+    document.addEventListener('dragover', (e) => {
+      if (!dragCourse) return;
+      const zone = zoneFor(e);
+      if (!zone) {
+        e.dataTransfer.dropEffect = 'none';
+        document.querySelectorAll('.drop-target-active').forEach(el => el.classList.remove('drop-target-active'));
+        return;
+      }
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (!zone.classList.contains('drop-target-active')) {
+        document.querySelectorAll('.drop-target-active').forEach(el => el.classList.remove('drop-target-active'));
+        zone.classList.add('drop-target-active');
+      }
+    });
+
+    document.addEventListener('drop', (e) => {
+      if (!dragCourse) return;
+      const zone = zoneFor(e);
+      const course = dragCourse;
+      cleanup();
+      if (!zone) return;
+      e.preventDefault();
+      this.moveCourseToSemester(course.id, zone.dataset.semesterId);
+    });
+
+    // The source element may already be re-rendered away after a drop, so
+    // dragend is a fallback; drop does the main cleanup.
+    document.addEventListener('dragend', cleanup);
+  }
+
   semesterOptionsHtml(selectedId) {
     return this.semesters.map(s =>
       `<option value="${this.escapeHtml(s.id)}" ${s.id === selectedId ? 'selected' : ''}>${this.escapeHtml(s.name.toUpperCase())}${s.id === this.currentSemesterId ? ' (CURRENT)' : ''}</option>`
@@ -1249,7 +1333,7 @@ class AcademicRunnerApp {
       const isActive = course.id === this.activeCourseId;
       const locked = this.isCourseLocked(course);
       return `
-        <div class="course-tab-item ${isActive ? 'active' : ''} ${locked ? 'is-locked' : ''}" data-course-id="${course.id}">
+        <div class="course-tab-item ${isActive ? 'active' : ''} ${locked ? 'is-locked' : ''}" data-course-id="${course.id}" draggable="true" title="${locked ? 'Locked. Unlock to move it to another semester' : 'Drag onto another semester to move it'}">
           <span class="tab-lock-indicator ${locked ? 'locked' : 'unlocked'}" title="${locked ? 'Marks locked' : 'Marks editable'}">${this.lockIcon(locked, 11)}</span>
           <span style="font-weight:800;letter-spacing:0.06em;">${course.code}</span>
           <span class="tab-credits">[ ${course.credits} CR ]</span>
@@ -1267,12 +1351,14 @@ class AcademicRunnerApp {
     // One labelled group per semester that has courses
     const coursesTabsHtml = this.semesters.map(sem => {
       const semCourses = this.getSemesterCourses(sem.id);
-      if (semCourses.length === 0) return '';
       const isCurrent = sem.id === this.currentSemesterId;
+      // Empty semesters stay in the DOM so they can take a dragged course;
+      // CSS only shows them while a drag is in progress.
+      const isEmpty = semCourses.length === 0;
       return `
-        <div class="ribbon-semester-group ${isCurrent ? 'is-current' : ''}" data-semester-id="${this.escapeHtml(sem.id)}">
+        <div class="ribbon-semester-group ${isCurrent ? 'is-current' : ''} ${isEmpty ? 'is-empty' : ''}" data-semester-id="${this.escapeHtml(sem.id)}">
           <span class="ribbon-semester-label" title="${isCurrent ? 'Current semester' : 'Semester'}">${this.escapeHtml(sem.name.toUpperCase())}</span>
-          ${semCourses.map(courseTabHtml).join('')}
+          ${isEmpty ? '<span class="ribbon-drop-placeholder">DROP HERE</span>' : semCourses.map(courseTabHtml).join('')}
         </div>
       `;
     }).join('');
@@ -1409,7 +1495,7 @@ class AcademicRunnerApp {
         : '100% (Assumed)';
 
       return `
-        <div class="home-subject-card tactical-card-corners ${stats.statusZone} ${this.isCourseLocked(course) ? 'is-locked' : ''}" data-course-id="${course.id}">
+        <div class="home-subject-card tactical-card-corners ${stats.statusZone} ${this.isCourseLocked(course) ? 'is-locked' : ''}" data-course-id="${course.id}" draggable="true">
           <span class="hud-corner-crosshair tl"></span>
           <span class="hud-corner-crosshair tr"></span>
           <span class="hud-corner-crosshair bl"></span>
@@ -1543,6 +1629,7 @@ class AcademicRunnerApp {
               <span>SGPA <strong>${gpa.credits > 0 ? gpa.gpa.toFixed(2) : '--.--'}</strong></span>
               ${lockedCount > 0 ? `<span class="semester-locked-count">${this.lockIcon(true, 10)} ${lockedCount} LOCKED</span>` : ''}
             </div>
+            <span class="semester-drop-label" aria-hidden="true">DROP TO MOVE HERE</span>
             <div class="semester-header-actions">
               ${isCurrent ? '' : `<button type="button" class="btn-micro semester-set-current-btn" data-semester-id="${sid}" title="Track this semester in the top stats">SET CURRENT</button>`}
               <button type="button" class="btn-micro semester-rename-btn" data-semester-id="${sid}">RENAME</button>
@@ -1558,7 +1645,10 @@ class AcademicRunnerApp {
       `;
     }).join('');
 
-    gridEl.innerHTML = groupsHtml;
+    const dragHint = this.semesters.length > 1
+      ? '<div class="semester-drag-hint">// DRAG A SUBJECT CARD ONTO ANOTHER SEMESTER TO MOVE IT. LOCKED SUBJECTS STAY PUT.</div>'
+      : '';
+    gridEl.innerHTML = dragHint + groupsHtml;
   }
 
   renderHeaderBanner() {
@@ -2801,6 +2891,8 @@ class AcademicRunnerApp {
         this.updateTargetScore(val);
       });
     }
+
+    this.setupCourseDragAndDrop();
 
     // Delegated click listeners
     document.addEventListener('click', (e) => {
