@@ -6,6 +6,10 @@ const ACTIVE_COURSE_KEY = 'iitd_runner_active_course_v1';
 const INITIALIZED_KEY = 'iitd_runner_initialized';
 const CUTOFFS_STORAGE_KEY = 'iitd_runner_grade_cutoffs_v1';
 
+// Padlock glyphs used for the per-course marks lock
+const LOCK_SVG_CLOSED = '<svg class="lock-glyph" width="__S__" height="__S__" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="1"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>';
+const LOCK_SVG_OPEN = '<svg class="lock-glyph" width="__S__" height="__S__" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="1"></rect><path d="M8 11V7a4 4 0 0 1 7.75-1.4"></path></svg>';
+
 // Baseline starts empty with zero subjects
 const DEFAULT_COURSES = [];
 
@@ -467,6 +471,51 @@ class AcademicRunnerApp {
     }
   }
 
+  // ---- Course marks lock ----------------------------------------------
+  isCourseLocked(course) {
+    return !!(course && course.locked);
+  }
+
+  lockIcon(locked, size = 11) {
+    return (locked ? LOCK_SVG_CLOSED : LOCK_SVG_OPEN).replace(/__S__/g, size);
+  }
+
+  lockPillHtml(course) {
+    const locked = this.isCourseLocked(course);
+    return `<span class="lock-pill ${locked ? 'locked' : 'unlocked'}" title="${locked ? 'Marks are locked. Unlock the course to edit them.' : 'Marks are editable'}">${this.lockIcon(locked, 10)}<span>${locked ? 'LOCKED' : 'UNLOCKED'}</span></span>`;
+  }
+
+  // variant: 'banner' (full tactical button), 'card' (compact card action), 'micro' (cutoff matrix)
+  lockToggleBtnHtml(course, variant = 'banner') {
+    const locked = this.isCourseLocked(course);
+    const label = locked ? 'UNLOCK MARKS' : 'LOCK MARKS';
+    const title = locked ? 'Unlock this course so marks can be edited' : 'Lock this course to prevent accidental changes to entered marks';
+    const cls = variant === 'micro' ? 'btn-micro' : variant === 'card' ? 'card-action-btn' : 'tactical-btn';
+    return `<button type="button" class="${cls} lock-toggle-btn ${locked ? 'is-locked' : ''}" data-lock-id="${course.id}" title="${title}" aria-pressed="${locked}">${this.lockIcon(!locked, variant === 'banner' ? 12 : 10)}<span>${label}</span></button>`;
+  }
+
+  // Returns true (and warns) when an edit is attempted on a locked course
+  blockIfLocked(course) {
+    if (!this.isCourseLocked(course)) return false;
+    this.showToast(`${course.code} IS LOCKED // UNLOCK TO EDIT MARKS`);
+    window.sfx.playWarning();
+    return true;
+  }
+
+  toggleCourseLock(courseId) {
+    const course = this.courses.find(c => c.id === courseId);
+    if (!course) return;
+    course.locked = !course.locked;
+    this.saveCourses();
+    this.render();
+    this.showToast(course.locked ? `${course.code} LOCKED // MARKS PROTECTED` : `${course.code} UNLOCKED // MARKS EDITABLE`);
+    if (course.locked) {
+      window.sfx.playSuccess();
+    } else {
+      window.sfx.playClick();
+    }
+  }
+
   updateTargetScore(newTarget) {
     const course = this.getActiveCourse();
     course.target = Math.min(100, Math.max(0, parseFloat(newTarget) || 85));
@@ -494,6 +543,7 @@ class AcademicRunnerApp {
 
   updateAssessmentScore(assessmentId, achieved, total) {
     const course = this.getActiveCourse();
+    if (this.blockIfLocked(course)) { this.render(); return; }
     const item = course.assessments.find(a => a.id === assessmentId);
     if (!item) return;
 
@@ -509,6 +559,7 @@ class AcademicRunnerApp {
 
   updateAssessmentWeight(assessmentId, newWeight) {
     const course = this.getActiveCourse();
+    if (this.blockIfLocked(course)) { this.render(); return; }
     const item = course.assessments.find(a => a.id === assessmentId);
     if (!item) return;
 
@@ -531,6 +582,7 @@ class AcademicRunnerApp {
 
   updateSubitem(assessmentId, subitemId, field, val) {
     const course = this.getActiveCourse();
+    if (this.blockIfLocked(course)) { this.render(); return; }
     const item = course.assessments.find(a => a.id === assessmentId);
     if (!item || !item.subitems) return;
 
@@ -597,6 +649,7 @@ class AcademicRunnerApp {
 
   addSubitem(assessmentId) {
     const course = this.getActiveCourse();
+    if (this.blockIfLocked(course)) { this.render(); return; }
     const item = course.assessments.find(a => a.id === assessmentId);
     if (!item) return;
 
@@ -626,6 +679,7 @@ class AcademicRunnerApp {
 
   deleteSubitem(assessmentId, subitemId) {
     const course = this.getActiveCourse();
+    if (this.blockIfLocked(course)) { this.render(); return; }
     const item = course.assessments.find(a => a.id === assessmentId);
     if (!item || !item.subitems) return;
 
@@ -656,6 +710,7 @@ class AcademicRunnerApp {
 
   removeSubsections(assessmentId) {
     const course = this.getActiveCourse();
+    if (this.blockIfLocked(course)) { this.render(); return; }
     const item = course.assessments.find(a => a.id === assessmentId);
     if (!item) return;
 
@@ -671,6 +726,7 @@ class AcademicRunnerApp {
 
   balanceSubitemWeights(assessmentId) {
     const course = this.getActiveCourse();
+    if (this.blockIfLocked(course)) { this.render(); return; }
     const item = course.assessments.find(a => a.id === assessmentId);
     if (!item || !item.subitems || item.subitems.length === 0) return;
 
@@ -685,6 +741,7 @@ class AcademicRunnerApp {
 
   convertAssessmentToSubsections(assessmentId) {
     const course = this.getActiveCourse();
+    if (this.blockIfLocked(course)) { this.render(); return; }
     const item = course.assessments.find(a => a.id === assessmentId);
     if (!item) return;
 
@@ -706,6 +763,7 @@ class AcademicRunnerApp {
 
   addAssessmentComponent(name, weight, total, date, hasSubs) {
     const course = this.getActiveCourse();
+    if (this.blockIfLocked(course)) return;
     const newId = 'comp_' + Date.now();
     const parsedWeight = parseFloat(weight) || 10;
     let subitems = [];
@@ -739,6 +797,7 @@ class AcademicRunnerApp {
 
   deleteAssessmentComponent(assessmentId) {
     const course = this.getActiveCourse();
+    if (this.blockIfLocked(course)) return;
     if (course.assessments.length <= 1) {
       alert('Cannot delete the last remaining assessment component.');
       return;
@@ -755,6 +814,7 @@ class AcademicRunnerApp {
 
   openEditComponentModal(assessmentId) {
     const course = this.getActiveCourse();
+    if (this.blockIfLocked(course)) { this.render(); return; }
     const item = course.assessments.find(a => a.id === assessmentId);
     if (!item) return;
 
@@ -767,6 +827,7 @@ class AcademicRunnerApp {
 
   saveEditComponent(assessmentId, newName, newDate) {
     const course = this.getActiveCourse();
+    if (this.blockIfLocked(course)) { this.render(); return; }
     const item = course.assessments.find(a => a.id === assessmentId);
     if (!item) return;
 
@@ -948,16 +1009,19 @@ class AcademicRunnerApp {
 
     const coursesTabsHtml = this.courses.map(course => {
       const isActive = course.id === this.activeCourseId;
+      const locked = this.isCourseLocked(course);
       return `
-        <div class="course-tab-item ${isActive ? 'active' : ''}" data-course-id="${course.id}">
+        <div class="course-tab-item ${isActive ? 'active' : ''} ${locked ? 'is-locked' : ''}" data-course-id="${course.id}">
+          <span class="tab-lock-indicator ${locked ? 'locked' : 'unlocked'}" title="${locked ? 'Marks locked' : 'Marks editable'}">${this.lockIcon(locked, 11)}</span>
           <span style="font-weight:800;letter-spacing:0.06em;">${course.code}</span>
           <span class="tab-credits">[ ${course.credits} CR ]</span>
+          ${locked ? '' : `
           <button class="tab-delete-btn" data-delete-id="${course.id}" title="Remove course">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
-          </button>
+          </button>`}
         </div>
       `;
     }).join('');
@@ -1082,7 +1146,7 @@ class AcademicRunnerApp {
         : '100% (Assumed)';
 
       return `
-        <div class="home-subject-card tactical-card-corners ${stats.statusZone}" data-course-id="${course.id}">
+        <div class="home-subject-card tactical-card-corners ${stats.statusZone} ${this.isCourseLocked(course) ? 'is-locked' : ''}" data-course-id="${course.id}">
           <span class="hud-corner-crosshair tl"></span>
           <span class="hud-corner-crosshair tr"></span>
           <span class="hud-corner-crosshair bl"></span>
@@ -1094,6 +1158,7 @@ class AcademicRunnerApp {
                 <span class="home-card-code">${course.code}</span>
                 <span class="meta-pill">[ ${credits} CR ]</span>
                 <span class="home-card-target-pill">GOAL &gt;${stats.target}%</span>
+                ${this.lockPillHtml(course)}
                 <span style="font-family:var(--font-mono);font-size:9.5px;color:var(--text-muted);letter-spacing:0.1em;">SN-IITD-${course.code}</span>
               </div>
               <h3 class="home-card-title">${course.title.toUpperCase()}</h3>
@@ -1157,6 +1222,8 @@ class AcademicRunnerApp {
             <div class="home-card-eval-status">
               ${gradedAssessments} OF ${course.assessments.length} GRADED • ${stats.remainingWeight.toFixed(0)}% PENDING
             </div>
+            <div class="home-card-footer-actions">
+            ${this.lockToggleBtnHtml(course, 'card')}
             <button class="tactical-btn primary home-jump-course-btn" data-jump-id="${course.id}">
               <span>OPEN SUBJECT HUD</span>
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -1164,6 +1231,7 @@ class AcademicRunnerApp {
                 <polyline points="12 5 19 12 12 19"></polyline>
               </svg>
             </button>
+            </div>
           </div>
         </div>
       `;
@@ -1203,6 +1271,16 @@ class AcademicRunnerApp {
     if (titleEl) titleEl.textContent = course.title.toUpperCase();
     if (creditsEl) creditsEl.textContent = `${course.credits} CREDITS`;
     if (targetSlider) targetSlider.value = target;
+
+    const lockRow = document.getElementById('subjectLockRow');
+    if (lockRow) {
+      const locked = this.isCourseLocked(course);
+      lockRow.innerHTML = `
+        ${this.lockPillHtml(course)}
+        <span class="lock-row-caption">${locked ? 'MARKS ENTRY FROZEN // UNLOCK TO EDIT' : 'MARKS ENTRY OPEN // LOCK TO PREVENT ACCIDENTAL EDITS'}</span>
+        ${this.lockToggleBtnHtml(course, 'banner')}
+      `;
+    }
     if (targetValEl) targetValEl.textContent = `${target.toFixed(1)}%`;
 
     // Highlight active preset button if applicable
@@ -1320,6 +1398,20 @@ class AcademicRunnerApp {
     const container = document.getElementById('assessmentsContainer');
     if (!container) return;
 
+    const locked = this.isCourseLocked(course);
+    const dis = locked ? 'disabled' : '';
+    container.classList.toggle('roster-locked', locked);
+
+    const rosterLockBadge = document.getElementById('rosterLockBadge');
+    if (rosterLockBadge) rosterLockBadge.innerHTML = this.lockPillHtml(course);
+
+    const addCompBtn = document.getElementById('openAddComponentBtn');
+    if (addCompBtn) {
+      addCompBtn.disabled = locked;
+      addCompBtn.classList.toggle('is-locked', locked);
+      addCompBtn.title = locked ? 'Course is locked. Unlock it to add components.' : '';
+    }
+
     container.innerHTML = course.assessments.map(item => {
       const isCompleted = item.achieved !== null && item.total !== null && item.total > 0;
       const scorePct = isCompleted ? (item.achieved / item.total) * 100 : 0;
@@ -1327,7 +1419,7 @@ class AcademicRunnerApp {
       const weightedLost = isCompleted ? item.weight - weightedEarned : 0;
 
       return `
-        <div class="assessment-card tactical-card-corners ${isCompleted ? 'completed' : 'pending'}" id="card-${item.id}">
+        <div class="assessment-card tactical-card-corners ${isCompleted ? 'completed' : 'pending'} ${locked ? 'locked' : ''}" id="card-${item.id}">
           <span class="hud-corner-crosshair tl"></span>
           <span class="hud-corner-crosshair tr"></span>
           <span class="hud-corner-crosshair bl"></span>
@@ -1347,6 +1439,7 @@ class AcademicRunnerApp {
                       step="0.5" 
                       value="${item.weight}" 
                       data-assessment-id="${item.id}"
+                      ${dis}
                     />
                     <span class="weight-suffix">%</span>
                   </div>
@@ -1368,6 +1461,9 @@ class AcademicRunnerApp {
 
               <!-- Action Bar on Card -->
               <div class="card-actions-bar">
+                ${locked ? `
+                  <span class="card-locked-note">${this.lockIcon(true, 10)}<span>LOCKED // UNLOCK COURSE TO EDIT</span></span>
+                ` : `
                 <button class="card-action-btn edit-component-btn" data-assessment-id="${item.id}">
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -1403,6 +1499,7 @@ class AcademicRunnerApp {
                     <span>REMOVE</span>
                   </button>
                 ` : ''}
+                `}
               </div>
             </div>
 
@@ -1419,6 +1516,7 @@ class AcademicRunnerApp {
                   placeholder="Full (${item.total || item.weight})"
                   value="${item.achieved !== null ? item.achieved : ''}"
                   data-assessment-id="${item.id}"
+                  ${dis}
                   data-field="achieved"
                   title="${item.achieved === null ? 'Initially assumed Full Marks (' + (item.total || item.weight) + ')' : 'Marks scored'}"
                 />
@@ -1438,6 +1536,7 @@ class AcademicRunnerApp {
                   value="${item.total !== null ? item.total : ''}"
                   data-assessment-id="${item.id}"
                   data-field="total"
+                  ${dis}
                 />
               </div>
             </div>
@@ -1484,7 +1583,8 @@ class AcademicRunnerApp {
                         data-parent-id="${item.id}"
                         data-sub-id="${sub.id}"
                         data-field="name"
-                        title="Click to rename"
+                        title="${locked ? 'Course locked' : 'Click to rename'}"
+                        ${dis}
                       />
                       <div class="tut-weight-flex">
                         <input 
@@ -1498,15 +1598,16 @@ class AcademicRunnerApp {
                           data-sub-id="${sub.id}"
                           data-field="weight"
                           title="Subsection weightage (%)"
+                          ${dis}
                         />
                         <span>%</span>
-                        <button class="tut-delete-btn" data-parent-id="${item.id}" data-sub-id="${sub.id}" title="Remove this subsection">
+                        ${locked ? '' : `<button class="tut-delete-btn" data-parent-id="${item.id}" data-sub-id="${sub.id}" title="Remove this subsection">
                           <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                             <line x1="18" y1="6" x2="6" y2="18"></line>
                             <line x1="6" y1="6" x2="18" y2="18"></line>
                           </svg>
                           <span>DEL</span>
-                        </button>
+                        </button>`}
                       </div>
                     </div>
 
@@ -1531,6 +1632,7 @@ class AcademicRunnerApp {
                         data-sub-id="${sub.id}"
                         data-field="achieved"
                         title="${isSubCompleted ? 'Recorded score' : 'Unfilled: Initially assumed Full Marks (' + subMax + ')'}"
+                        ${dis}
                       />
                       <span style="color:var(--text-disabled);font-size:12px;">/</span>
                       <input 
@@ -1543,6 +1645,7 @@ class AcademicRunnerApp {
                         data-parent-id="${item.id}"
                         data-sub-id="${sub.id}"
                         data-field="total"
+                        ${dis}
                       />
                     </div>
                   </div>
@@ -1550,6 +1653,7 @@ class AcademicRunnerApp {
                 }).join('')}
               </div>
 
+              ${locked ? '' : `
               <div class="subgrid-actions-bar">
                 <div style="display:flex;gap:8px;flex-wrap:wrap;">
                   <button class="card-action-btn add-subitem-btn" data-parent-id="${item.id}">
@@ -1563,6 +1667,7 @@ class AcademicRunnerApp {
                   ✕ REMOVE ALL SUBSECTIONS
                 </button>
               </div>
+              `}
             </div>
           ` : ''}
         </div>
@@ -2026,6 +2131,8 @@ class AcademicRunnerApp {
       const activeScore = isOverridden ? parseFloat(course.scoreOverride) : autoScore;
       const gradeInfo = course.computedGrade || this.calculateCourseGrade(course);
       const verifiedSet = new Set(course.verifiedGrades || []);
+      const locked = this.isCourseLocked(course);
+      const dis = locked ? 'disabled' : '';
 
       // Delta to higher and lower
       let marginStripHtml = '';
@@ -2091,7 +2198,7 @@ class AcademicRunnerApp {
       const stripTone = gradeInfo.assignedGrade >= 9 ? 'volt' : gradeInfo.assignedGrade >= 8 ? 'cyan' : gradeInfo.assignedGrade >= 6 ? 'amber' : 'crimson';
 
       return `
-        <div class="cutoff-course-card tactical-card-corners" data-course-id="${course.id}">
+        <div class="cutoff-course-card tactical-card-corners ${locked ? 'is-locked' : ''}" data-course-id="${course.id}">
           <span class="hud-corner-crosshair tl"></span>
           <span class="hud-corner-crosshair tr"></span>
           <span class="hud-corner-crosshair bl"></span>
@@ -2104,18 +2211,20 @@ class AcademicRunnerApp {
                 <span class="course-code-pill">${course.code}</span>
                 <span class="course-credits-badge">[ ${course.credits} CREDITS ]</span>
                 <span class="course-synced-pill" title="Derived directly from your dashboard">[ENROLLED SUBJECT]</span>
+                ${this.lockPillHtml(course)}
               </div>
               <h3 class="cutoff-course-name">${course.title.toUpperCase()}</h3>
               <button class="btn-micro jump-course-hud-btn" data-course-id="${course.id}" title="Open this subject's detailed marks & assessment roster">
                 OPEN ASSESSMENT HUD →
               </button>
+              ${this.lockToggleBtnHtml(course, 'micro')}
             </div>
 
             <div class="cutoff-course-inputs-group">
               <div class="input-labeled-cell">
                 <label>COURSE CREDITS</label>
                 <div class="credits-input-wrap">
-                  <input type="number" min="1" max="10" step="1" value="${course.credits}" class="course-credits-input" data-course-id="${course.id}" title="Edit course credits (weights in CGPA)" />
+                  <input type="number" min="1" max="10" step="1" value="${course.credits}" class="course-credits-input" data-course-id="${course.id}" title="${locked ? 'Course locked' : 'Edit course credits (weights in CGPA)'}" ${dis} />
                   <span>CR</span>
                 </div>
               </div>
@@ -2123,14 +2232,14 @@ class AcademicRunnerApp {
               <div class="input-labeled-cell score-cell">
                 <div class="score-label-row">
                   <label>MARKS / SCORE</label>
-                  ${isOverridden ? `
+                  ${isOverridden && !locked ? `
                     <button class="sync-dashboard-btn" data-course-id="${course.id}" title="Revert to auto-calculated dashboard score">RESET AUTO (${autoScore}%)</button>
                   ` : `
-                    <span style="font-size:9.5px;color:var(--neon-volt);">[AUTO: ${autoScore}%]</span>
+                    <span style="font-size:9.5px;color:var(--neon-volt);">${isOverridden ? '[MANUAL SCORE]' : `[AUTO: ${autoScore}%]`}</span>
                   `}
                 </div>
                 <div class="score-input-wrap">
-                  <input type="number" min="0" max="${course.maxMarks || 100}" step="0.1" value="${activeScore}" placeholder="Score" class="course-score-input" data-course-id="${course.id}" title="Marks from dashboard (edit to simulate different scores)" />
+                  <input type="number" min="0" max="${course.maxMarks || 100}" step="0.1" value="${activeScore}" placeholder="Score" class="course-score-input" data-course-id="${course.id}" title="${locked ? 'Course locked. Unlock to edit marks.' : 'Marks from dashboard (edit to simulate different scores)'}" ${dis} />
                   <span>/ ${course.maxMarks || 100}</span>
                 </div>
                 <div class="score-eval-subtext">
@@ -2163,7 +2272,7 @@ class AcademicRunnerApp {
               <div class="grid-tools">
                 <span class="verified-legend"><span class="verified-dot"></span> Crowd-Sourced Responses</span>
                 <button class="btn-micro reset-course-btn" data-course-id="${course.id}" title="Reset cutoffs to crowd-sourced baseline">RESET CUTOFFS</button>
-                <button class="btn-micro danger-micro delete-cutoff-course-btn" data-course-id="${course.id}" title="Remove this course from enrolled dashboard subjects">REMOVE</button>
+                ${locked ? '' : `<button class="btn-micro danger-micro delete-cutoff-course-btn" data-course-id="${course.id}" title="Remove this course from enrolled dashboard subjects">REMOVE</button>`}
               </div>
             </div>
 
@@ -2193,6 +2302,7 @@ class AcademicRunnerApp {
   updateCourseUserScore(courseId, scoreVal) {
     const course = this.courses.find(c => c.id === courseId);
     if (!course) return;
+    if (this.blockIfLocked(course)) { this.renderCgpaSection(); return; }
 
     course.scoreOverride = scoreVal !== '' && !isNaN(scoreVal) ? parseFloat(scoreVal) : null;
     this.saveCourses();
@@ -2203,6 +2313,7 @@ class AcademicRunnerApp {
   updateCourseCredits(courseId, creditsVal) {
     const course = this.courses.find(c => c.id === courseId);
     if (!course) return;
+    if (this.blockIfLocked(course)) { this.renderCgpaSection(); return; }
 
     course.credits = Math.max(1, parseInt(creditsVal) || 1);
     this.saveCourses();
@@ -2214,6 +2325,7 @@ class AcademicRunnerApp {
   syncFromDashboard(courseId) {
     const course = this.courses.find(c => c.id === courseId);
     if (!course) return;
+    if (this.blockIfLocked(course)) { this.renderCgpaSection(); return; }
 
     delete course.scoreOverride;
     this.saveCourses();
@@ -2238,7 +2350,7 @@ class AcademicRunnerApp {
       course.verifiedGrades = [];
       course.maxMarks = 100;
     }
-    delete course.scoreOverride;
+    if (!this.isCourseLocked(course)) delete course.scoreOverride;
     this.saveCourses();
     this.renderCgpaSection();
     this.showToast(`CUTOFFS RESET FOR ${course.code}`);
@@ -2260,7 +2372,7 @@ class AcademicRunnerApp {
           course.verifiedGrades = [];
           course.maxMarks = 100;
         }
-        delete course.scoreOverride;
+        if (!this.isCourseLocked(course)) delete course.scoreOverride;
       });
       this.saveCourses();
       this.renderCgpaSection();
@@ -2337,6 +2449,14 @@ class AcademicRunnerApp {
 
     // Delegated click listeners
     document.addEventListener('click', (e) => {
+      // Course marks lock toggle (banner, home cards, cutoff cards)
+      const lockBtn = e.target.closest('.lock-toggle-btn');
+      if (lockBtn) {
+        e.stopPropagation();
+        this.toggleCourseLock(lockBtn.dataset.lockId || this.getActiveCourse()?.id);
+        return;
+      }
+
       // Preset Target Buttons
       const presetBtn = e.target.closest('.preset-target-btn');
       if (presetBtn) {
@@ -2657,6 +2777,7 @@ class AcademicRunnerApp {
 
     if (openCompBtn && compModal) {
       openCompBtn.addEventListener('click', () => {
+        if (this.blockIfLocked(this.getActiveCourse())) return;
         compModal.classList.add('active');
         window.sfx.playClick();
       });
@@ -2775,7 +2896,9 @@ class AcademicRunnerApp {
     const resetBtn = document.getElementById('resetDataBtn');
     if (resetBtn) {
       resetBtn.addEventListener('click', () => {
-        if (confirm('Reset dashboard to fresh baseline? All subjects and telemetry will be cleared.')) {
+        const lockedCount = this.courses.filter(c => this.isCourseLocked(c)).length;
+        const lockedNote = lockedCount > 0 ? ` This includes ${lockedCount} locked course(s).` : '';
+        if (confirm(`Reset dashboard to fresh baseline? All subjects and telemetry will be cleared.${lockedNote}`)) {
           this.courses = [];
           this.activeCourseId = 'home';
           this.saveCourses();
@@ -2925,6 +3048,10 @@ class AcademicRunnerApp {
             assessments: cleanAssessments
           };
 
+          if (c.locked) {
+            courseObj.locked = true;
+          }
+
           if (c.cutoffs && typeof c.cutoffs === 'object') {
             courseObj.cutoffs = { ...c.cutoffs };
           }
@@ -2950,7 +3077,9 @@ class AcademicRunnerApp {
 
         const countStr = sanitized.length === 1 ? '1 course' : `${sanitized.length} courses`;
         if (this.courses.length > 0) {
-          if (!confirm(`Import ${countStr} from JSON? This will replace your current active courses.`)) {
+          const lockedCount = this.courses.filter(c => this.isCourseLocked(c)).length;
+          const lockedNote = lockedCount > 0 ? ` ${lockedCount} locked course(s) will also be replaced.` : '';
+          if (!confirm(`Import ${countStr} from JSON? This will replace your current active courses.${lockedNote}`)) {
             return;
           }
         }
@@ -2988,6 +3117,7 @@ class AcademicRunnerApp {
 
   deleteCourse(courseId) {
     const course = this.courses.find(c => c.id === courseId);
+    if (this.blockIfLocked(course)) return;
     if (!confirm(`Delete course ${course ? course.code : ''}?`)) return;
 
     this.courses = this.courses.filter(c => c.id !== courseId);
