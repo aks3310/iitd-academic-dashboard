@@ -4214,6 +4214,108 @@ body::before {
   min-height: 200px;
 }
 
+/* Drag and drop: move a course between semesters */
+.semester-drag-hint {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  margin-bottom: -12px;
+}
+
+.home-subject-card[draggable="true"],
+.course-tab-item[draggable="true"] {
+  cursor: grab;
+}
+
+.home-subject-card.is-locked[draggable="true"] {
+  cursor: pointer;
+}
+
+.home-subject-card.is-dragging,
+.course-tab-item.is-dragging {
+  opacity: 0.35;
+  transform: none;
+  border-style: dashed;
+}
+
+.semester-drop-label {
+  display: none;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  padding: 2px 8px;
+  color: var(--bg-void);
+  background: var(--neon-volt);
+}
+
+/* While dragging: every other semester reads as a target, the hovered one lights up */
+body.course-drag-active .semester-group:not(.drag-origin) .semester-header-bar {
+  border-style: dashed;
+  border-left-style: solid;
+  border-left-color: var(--neon-volt);
+}
+
+body.course-drag-active .semester-group.drag-origin {
+  opacity: 0.55;
+}
+
+.semester-group.drop-target-active .semester-header-bar {
+  background: var(--neon-volt-dim);
+  border-color: var(--neon-volt);
+  box-shadow: 0 0 18px var(--neon-volt-dim);
+}
+
+.semester-group.drop-target-active .semester-drop-label {
+  display: inline-block;
+}
+
+.semester-group.drop-target-active .home-subjects-grid {
+  outline: 1px dashed var(--neon-volt);
+  outline-offset: 6px;
+}
+
+.ribbon-semester-group.is-empty {
+  display: none;
+}
+
+body.course-drag-active .ribbon-semester-group.is-empty {
+  display: flex;
+}
+
+.ribbon-drop-placeholder {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  color: var(--text-muted);
+  padding: 9px 14px;
+  border: 1px dashed var(--border-bright);
+}
+
+body.course-drag-active .ribbon-semester-group:not(.drag-origin) {
+  border-left-color: var(--neon-volt);
+}
+
+.ribbon-semester-group.drop-target-active {
+  background: var(--neon-volt-dim);
+  outline: 1px dashed var(--neon-volt);
+  outline-offset: 3px;
+}
+
+.ribbon-semester-group.drop-target-active .ribbon-semester-label,
+.ribbon-semester-group.drop-target-active .ribbon-drop-placeholder {
+  color: var(--neon-volt);
+  border-color: var(--neon-volt);
+}
+
+/* Touch screens have no drag and drop here; the Semester dropdown still works */
+@media (hover: none) {
+  .semester-drag-hint {
+    display: none;
+  }
+}
+
 /* Subject banner: semester row */
 .banner-semester-row {
   display: flex;
