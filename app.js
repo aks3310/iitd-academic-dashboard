@@ -5,6 +5,12 @@ const STORAGE_KEY = 'iitd_runner_courses_v1';
 const ACTIVE_COURSE_KEY = 'iitd_runner_active_course_v1';
 const INITIALIZED_KEY = 'iitd_runner_initialized';
 const CUTOFFS_STORAGE_KEY = 'iitd_runner_grade_cutoffs_v1';
+const SEMESTERS_KEY = 'iitd_runner_semesters_v1';
+const CURRENT_SEMESTER_KEY = 'iitd_runner_current_semester_v1';
+const COLLAPSED_SEMESTERS_KEY = 'iitd_runner_collapsed_semesters_v1';
+// Courses saved before semesters existed are migrated into this semester
+const DEFAULT_SEMESTER_ID = 'sem_1';
+const DEFAULT_SEMESTER_NAME = 'Semester 1';
 
 // Padlock glyphs used for the per-course marks lock
 const LOCK_SVG_CLOSED = '<svg class="lock-glyph" width="__S__" height="__S__" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="1"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>';
@@ -361,6 +367,18 @@ class AcademicRunnerApp {
     }
 
     this.courses = this.loadCourses();
+
+    // Semesters: every course belongs to one. Older saves have no semester info,
+    // so those courses are migrated into the current (or a default) semester.
+    const semesterState = this.reconcileSemesters(
+      this.loadSemesters(),
+      this.courses,
+      localStorage.getItem(CURRENT_SEMESTER_KEY)
+    );
+    this.semesters = semesterState.semesters;
+    this.currentSemesterId = semesterState.currentSemesterId;
+    this.collapsedSemesters = this.loadCollapsedSemesters();
+
     // Ensure all enrolled courses have cutoffs initialized from official baselines or defaults
     this.courses.forEach(c => this.ensureCourseCutoffs(c));
     this.cutoffFilterQuery = '';
@@ -382,6 +400,11 @@ class AcademicRunnerApp {
         });
       }
     });
+
+    // Persist the semester migration so older saves are upgraded once
+    if (this.courses.length > 0) {
+      this.saveCourses();
+    }
   }
 
   ensureCourseCutoffs(course) {
@@ -423,6 +446,228 @@ class AcademicRunnerApp {
   saveCourses() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(this.courses));
     localStorage.setItem(ACTIVE_COURSE_KEY, this.activeCourseId);
+    if (this.semesters) {
+      localStorage.setItem(SEMESTERS_KEY, JSON.stringify(this.semesters));
+      localStorage.setItem(CURRENT_SEMESTER_KEY, this.currentSemesterId);
+    }
+  }
+
+  // ---- Semesters ------------------------------------------------------
+  loadSemesters() {
+    try {
+      const stored = localStorage.getItem(SEMESTERS_KEY);
+      if (stored !== null) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      console.error('Failed to parse stored semesters:', e);
+    }
+    return [];
+  }
+
+  loadCollapsedSemesters() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(COLLAPSED_SEMESTERS_KEY) || '[]');
+      return new Set(Array.isArray(parsed) ? parsed : []);
+    } catch (e) {
+      return new Set();
+    }
+  }
+
+  saveCollapsedSemesters() {
+    try {
+      localStorage.setItem(COLLAPSED_SEMESTERS_KEY, JSON.stringify([...this.collapsedSemesters]));
+    } catch (e) { /* per-viewer convenience only */ }
+  }
+
+  newSemesterId() {
+    return `sem_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
+  }
+
+  // Cleans a semester list and makes sure every course points at one of them.
+  // Accepts courses carrying `semesterId` (current format) or a `semester`
+  // name/number (hand-written JSON). Courses with neither land in the current
+  // semester. Mutates the courses; returns { semesters, currentSemesterId }.
+  reconcileSemesters(rawSemesters, courses, preferredCurrentId) {
+    const list = [];
+    const byId = new Map();
+    const add = (id, name) => {
+      const sem = { id, name: name || `Semester ${list.length + 1}` };
+      list.push(sem);
+      byId.set(id, sem);
+      return sem;
+    };
+
+    (Array.isArray(rawSemesters) ? rawSemesters : []).forEach(raw => {
+      if (!raw || typeof raw !== 'object') return;
+      const id = typeof raw.id === 'string' && raw.id.trim() ? raw.id.trim() : this.newSemesterId();
+      if (byId.has(id)) return;
+      add(id, String(raw.name || '').trim().slice(0, 40));
+    });
+
+    const unassigned = [];
+    courses.forEach(c => {
+      const label = typeof c.semester === 'number'
+        ? `Semester ${c.semester}`
+        : (typeof c.semester === 'string' ? c.semester.trim().slice(0, 40) : '');
+      delete c.semester;
+
+      if (typeof c.semesterId === 'string' && byId.has(c.semesterId)) return;
+      if (label) {
+        const match = list.find(sem => sem.name.toLowerCase() === label.toLowerCase());
+        c.semesterId = match ? match.id : add(this.newSemesterId(), label).id;
+      } else if (typeof c.semesterId === 'string' && c.semesterId.trim()) {
+        // Semester id we have no record of: keep the grouping, give it a name
+        add(c.semesterId.trim(), '');
+        c.semesterId = c.semesterId.trim();
+      } else {
+        unassigned.push(c);
+      }
+    });
+
+    if (list.length === 0) add(DEFAULT_SEMESTER_ID, DEFAULT_SEMESTER_NAME);
+    const currentSemesterId = byId.has(preferredCurrentId) ? preferredCurrentId : list[list.length - 1].id;
+    unassigned.forEach(c => { c.semesterId = currentSemesterId; });
+
+    return { semesters: list, currentSemesterId };
+  }
+
+  getSemester(semesterId) {
+    return this.semesters.find(s => s.id === semesterId) || null;
+  }
+
+  getCurrentSemester() {
+    return this.getSemester(this.currentSemesterId) || this.semesters[this.semesters.length - 1];
+  }
+
+  getSemesterCourses(semesterId) {
+    return this.courses.filter(c => c.semesterId === semesterId);
+  }
+
+  semesterName(semesterId) {
+    const sem = this.getSemester(semesterId);
+    return sem ? sem.name : 'Unassigned';
+  }
+
+  escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  }
+
+  // Credit-weighted grade point average over a list of courses
+  calculateGpa(courses) {
+    let credits = 0;
+    let points = 0;
+    courses.forEach(course => {
+      const cr = parseFloat(course.credits) || 0;
+      credits += cr;
+      points += this.calculateCourseGrade(course).assignedGrade * cr;
+    });
+    return { gpa: credits > 0 ? points / credits : 0, credits, points };
+  }
+
+  addSemester() {
+    const suggested = `Semester ${this.semesters.length + 1}`;
+    const input = prompt('Name for the new semester:', suggested);
+    if (input === null) return;
+    const name = input.trim().slice(0, 40) || suggested;
+    if (this.semesters.some(s => s.name.toLowerCase() === name.toLowerCase())) {
+      this.showToast(`A SEMESTER NAMED ${name.toUpperCase()} ALREADY EXISTS`);
+      window.sfx.playWarning();
+      return;
+    }
+    const sem = { id: this.newSemesterId(), name };
+    this.semesters.push(sem);
+    this.currentSemesterId = sem.id;
+    this.saveCourses();
+    this.render();
+    this.showToast(`${name.toUpperCase()} CREATED // SET AS CURRENT SEMESTER`);
+    window.sfx.playSuccess();
+  }
+
+  renameSemester(semesterId) {
+    const sem = this.getSemester(semesterId);
+    if (!sem) return;
+    const input = prompt('Rename semester:', sem.name);
+    if (input === null) return;
+    const name = input.trim().slice(0, 40);
+    if (!name || name === sem.name) return;
+    if (this.semesters.some(s => s.id !== sem.id && s.name.toLowerCase() === name.toLowerCase())) {
+      this.showToast(`A SEMESTER NAMED ${name.toUpperCase()} ALREADY EXISTS`);
+      window.sfx.playWarning();
+      return;
+    }
+    sem.name = name;
+    this.saveCourses();
+    this.render();
+    this.showToast(`SEMESTER RENAMED // ${name.toUpperCase()}`);
+    window.sfx.playClick();
+  }
+
+  deleteSemester(semesterId) {
+    const sem = this.getSemester(semesterId);
+    if (!sem) return;
+    const count = this.getSemesterCourses(semesterId).length;
+    if (count > 0) {
+      this.showToast(`${sem.name.toUpperCase()} HAS ${count} COURSE(S) // MOVE OR REMOVE THEM FIRST`);
+      window.sfx.playWarning();
+      return;
+    }
+    if (this.semesters.length <= 1) {
+      this.showToast('AT LEAST ONE SEMESTER IS REQUIRED');
+      window.sfx.playWarning();
+      return;
+    }
+    if (!confirm(`Delete empty semester "${sem.name}"?`)) return;
+    this.semesters = this.semesters.filter(s => s.id !== semesterId);
+    this.collapsedSemesters.delete(semesterId);
+    this.saveCollapsedSemesters();
+    if (this.currentSemesterId === semesterId) {
+      this.currentSemesterId = this.semesters[this.semesters.length - 1].id;
+    }
+    this.saveCourses();
+    this.render();
+    this.showToast('SEMESTER DELETED');
+    window.sfx.playClick();
+  }
+
+  setCurrentSemester(semesterId) {
+    if (!this.getSemester(semesterId)) return;
+    this.currentSemesterId = semesterId;
+    this.collapsedSemesters.delete(semesterId);
+    this.saveCollapsedSemesters();
+    this.saveCourses();
+    this.render();
+    this.showToast(`${this.semesterName(semesterId).toUpperCase()} IS NOW THE CURRENT SEMESTER`);
+    window.sfx.playClick();
+  }
+
+  toggleSemesterCollapsed(semesterId) {
+    if (this.collapsedSemesters.has(semesterId)) {
+      this.collapsedSemesters.delete(semesterId);
+    } else {
+      this.collapsedSemesters.add(semesterId);
+    }
+    this.saveCollapsedSemesters();
+    this.renderHomeCockpit();
+    window.sfx.playClick();
+  }
+
+  moveCourseToSemester(courseId, semesterId) {
+    const course = this.courses.find(c => c.id === courseId);
+    if (!course || !this.getSemester(semesterId) || course.semesterId === semesterId) return;
+    if (this.blockIfLocked(course)) { this.render(); return; }
+    course.semesterId = semesterId;
+    this.saveCourses();
+    this.render();
+    this.showToast(`${course.code} MOVED TO ${this.semesterName(semesterId).toUpperCase()}`);
+    window.sfx.playClick();
+  }
+
+  semesterOptionsHtml(selectedId) {
+    return this.semesters.map(s =>
+      `<option value="${this.escapeHtml(s.id)}" ${s.id === selectedId ? 'selected' : ''}>${this.escapeHtml(s.name.toUpperCase())}${s.id === this.currentSemesterId ? ' (CURRENT)' : ''}</option>`
+    ).join('');
   }
 
   loadCutoffCourses() {
@@ -925,13 +1170,6 @@ class AcademicRunnerApp {
     }
   }
 
-  openAddCourseModal() {
-    const modal = document.getElementById('addCourseModal');
-    if (modal) {
-      modal.classList.add('active');
-    }
-  }
-
   initClock() {
     const clockEl = document.getElementById('liveClock');
     const updateTime = () => {
@@ -1007,7 +1245,7 @@ class AcademicRunnerApp {
       </div>
     `;
 
-    const coursesTabsHtml = this.courses.map(course => {
+    const courseTabHtml = course => {
       const isActive = course.id === this.activeCourseId;
       const locked = this.isCourseLocked(course);
       return `
@@ -1024,6 +1262,19 @@ class AcademicRunnerApp {
           </button>`}
         </div>
       `;
+    };
+
+    // One labelled group per semester that has courses
+    const coursesTabsHtml = this.semesters.map(sem => {
+      const semCourses = this.getSemesterCourses(sem.id);
+      if (semCourses.length === 0) return '';
+      const isCurrent = sem.id === this.currentSemesterId;
+      return `
+        <div class="ribbon-semester-group ${isCurrent ? 'is-current' : ''}" data-semester-id="${this.escapeHtml(sem.id)}">
+          <span class="ribbon-semester-label" title="${isCurrent ? 'Current semester' : 'Semester'}">${this.escapeHtml(sem.name.toUpperCase())}</span>
+          ${semCourses.map(courseTabHtml).join('')}
+        </div>
+      `;
     }).join('');
 
     listEl.innerHTML = homeTabHtml + cgpaTabHtml + coursesTabsHtml;
@@ -1033,6 +1284,11 @@ class AcademicRunnerApp {
     const gridEl = document.getElementById('homeSubjectsGrid');
     if (!gridEl) return;
 
+    // Top HUD tracks the current semester; past semesters are listed below it
+    const currentSem = this.getCurrentSemester();
+    const hudCourses = this.getSemesterCourses(currentSem.id);
+    const semLabel = currentSem.name.toUpperCase();
+
     let totalCredits = 0;
     let weightedTargetSum = 0;
     let weightedScoreSum = 0;
@@ -1041,7 +1297,7 @@ class AcademicRunnerApp {
     let lowestMarginCourse = null;
     let lowestMarginVal = 999;
 
-    const courseStatsList = this.courses.map(course => {
+    const courseStatsList = hudCourses.map(course => {
       const stats = this.calculateCourseStats(course);
       const credits = parseInt(course.credits) || 3;
       totalCredits += credits;
@@ -1075,11 +1331,16 @@ class AcademicRunnerApp {
     const atRiskEl = document.getElementById('homeAtRiskCountVal');
     const summaryCountEl = document.getElementById('homeSummaryCourseCount');
 
+    const currentSemEl = document.getElementById('homeCurrentSemesterText');
+    if (currentSemEl) currentSemEl.textContent = semLabel;
     if (creditsEl) creditsEl.textContent = `${totalCredits} CREDITS ENROLLED`;
-    if (summaryCountEl) summaryCountEl.textContent = `${this.courses.length} COURSES LOADED`;
+    if (summaryCountEl) {
+      const semCount = this.semesters.length;
+      summaryCountEl.textContent = `${this.courses.length} COURSES • ${semCount} SEMESTER${semCount === 1 ? '' : 'S'}`;
+    }
     if (statusTextEl) {
-      if (this.courses.length === 0) {
-        statusTextEl.textContent = `NO ENROLLED SUBJECTS // CLICK + ADD SUBJECT`;
+      if (hudCourses.length === 0) {
+        statusTextEl.textContent = `NO SUBJECTS IN ${semLabel} // CLICK + ADD SUBJECT`;
         statusTextEl.style.color = 'var(--text-muted)';
       } else if (atRiskCount > 0) {
         statusTextEl.textContent = `CAUTION: ${atRiskCount} COURSE(S) AT RISK`;
@@ -1091,7 +1352,7 @@ class AcademicRunnerApp {
     }
 
     if (avgMarginEl) {
-      if (this.courses.length === 0) {
+      if (hudCourses.length === 0) {
         avgMarginEl.textContent = '--%';
         avgMarginEl.className = 'stat-cell-val';
       } else {
@@ -1101,7 +1362,7 @@ class AcademicRunnerApp {
     }
 
     if (avgScoreEl) {
-      if (this.courses.length === 0) {
+      if (hudCourses.length === 0) {
         avgScoreEl.textContent = '--%';
         avgScoreEl.className = 'stat-cell-val';
       } else {
@@ -1131,12 +1392,14 @@ class AcademicRunnerApp {
     }
 
     if (atRiskEl) {
-      atRiskEl.textContent = `${atRiskCount} / ${this.courses.length}`;
+      atRiskEl.textContent = `${atRiskCount} / ${hudCourses.length}`;
       atRiskEl.className = `stat-cell-val ${atRiskCount === 0 ? 'accent-volt' : 'accent-crimson'}`;
     }
 
     // Render Subject Cards
-    const cardsHtml = courseStatsList.map(({ course, stats, credits }) => {
+    const cardHtml = (course) => {
+      const stats = this.calculateCourseStats(course);
+      const credits = parseInt(course.credits) || 3;
       let cushionPct = stats.maxLossAllowed > 0 ? (stats.marginRemaining / stats.maxLossAllowed) * 100 : 0;
       cushionPct = Math.max(0, Math.min(100, cushionPct));
 
@@ -1235,10 +1498,10 @@ class AcademicRunnerApp {
           </div>
         </div>
       `;
-    }).join('');
+    };
 
-    const addCardHtml = `
-      <div class="home-add-card tactical-card-corners" id="homeAddCardTrigger">
+    const addCardHtml = (sem) => `
+      <div class="home-add-card tactical-card-corners" data-semester-id="${this.escapeHtml(sem.id)}">
         <span class="hud-corner-crosshair tl"></span>
         <span class="hud-corner-crosshair tr"></span>
         <span class="hud-corner-crosshair bl"></span>
@@ -1250,12 +1513,52 @@ class AcademicRunnerApp {
           </svg>
         </div>
         <div class="home-add-card-title">ENROLL NEW SUBJECT</div>
-        <div class="home-add-card-desc">Add MTL100, COL100, ELL100, PYL100, APL100 or custom course breakdown</div>
+        <div class="home-add-card-desc">Add a preset or custom course to ${this.escapeHtml(sem.name.toUpperCase())}</div>
         <span style="font-family:var(--font-mono);font-size:9.5px;color:var(--neon-volt);letter-spacing:0.14em;margin-top:6px;">[ + INITIALIZE ]</span>
       </div>
     `;
 
-    gridEl.innerHTML = cardsHtml + addCardHtml;
+    const chevron = `<svg class="semester-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
+
+    const groupsHtml = this.semesters.map(sem => {
+      const semCourses = this.getSemesterCourses(sem.id);
+      const isCurrent = sem.id === this.currentSemesterId;
+      const collapsed = this.collapsedSemesters.has(sem.id);
+      const credits = semCourses.reduce((sum, c) => sum + (parseFloat(c.credits) || 0), 0);
+      const lockedCount = semCourses.filter(c => this.isCourseLocked(c)).length;
+      const gpa = this.calculateGpa(semCourses);
+      const sid = this.escapeHtml(sem.id);
+
+      return `
+        <section class="semester-group ${isCurrent ? 'is-current' : ''} ${collapsed ? 'is-collapsed' : ''}" data-semester-id="${sid}">
+          <div class="semester-header-bar">
+            <button type="button" class="semester-toggle-btn" data-semester-toggle="${sid}" aria-expanded="${!collapsed}" title="${collapsed ? 'Expand' : 'Collapse'} semester">
+              ${chevron}
+              <span class="semester-name">${this.escapeHtml(sem.name.toUpperCase())}</span>
+            </button>
+            ${isCurrent ? '<span class="semester-current-pill">CURRENT</span>' : ''}
+            <div class="semester-header-meta">
+              <span>${semCourses.length} COURSE${semCourses.length === 1 ? '' : 'S'}</span>
+              <span>${credits} CR</span>
+              <span>SGPA <strong>${gpa.credits > 0 ? gpa.gpa.toFixed(2) : '--.--'}</strong></span>
+              ${lockedCount > 0 ? `<span class="semester-locked-count">${this.lockIcon(true, 10)} ${lockedCount} LOCKED</span>` : ''}
+            </div>
+            <div class="semester-header-actions">
+              ${isCurrent ? '' : `<button type="button" class="btn-micro semester-set-current-btn" data-semester-id="${sid}" title="Track this semester in the top stats">SET CURRENT</button>`}
+              <button type="button" class="btn-micro semester-rename-btn" data-semester-id="${sid}">RENAME</button>
+              ${semCourses.length === 0 && this.semesters.length > 1 ? `<button type="button" class="btn-micro danger-micro semester-delete-btn" data-semester-id="${sid}">DELETE</button>` : ''}
+            </div>
+          </div>
+          ${collapsed ? '' : `
+          <div class="home-subjects-grid">
+            ${semCourses.map(cardHtml).join('')}
+            ${addCardHtml(sem)}
+          </div>`}
+        </section>
+      `;
+    }).join('');
+
+    gridEl.innerHTML = groupsHtml;
   }
 
   renderHeaderBanner() {
@@ -1271,6 +1574,17 @@ class AcademicRunnerApp {
     if (titleEl) titleEl.textContent = course.title.toUpperCase();
     if (creditsEl) creditsEl.textContent = `${course.credits} CREDITS`;
     if (targetSlider) targetSlider.value = target;
+
+    const semRow = document.getElementById('subjectSemesterRow');
+    if (semRow) {
+      const locked = this.isCourseLocked(course);
+      semRow.innerHTML = `
+        <span class="semester-row-label">SEMESTER</span>
+        <select class="semester-move-select" data-course-id="${course.id}" ${locked ? 'disabled title="Unlock the course to move it to another semester"' : 'title="Move this course to another semester"'}>
+          ${this.semesterOptionsHtml(course.semesterId)}
+        </select>
+      `;
+    }
 
     const lockRow = document.getElementById('subjectLockRow');
     if (lockRow) {
@@ -1933,14 +2247,19 @@ class AcademicRunnerApp {
       }
     });
 
+    // Across every semester this is the CGPA (kept as `sgpa` for the existing readout code)
     const sgpa = totalCredits > 0 ? (totalPoints / totalCredits) : 0.0;
 
     let jumpBoostText = 'Smallest gap to the next higher grade tier.';
     if (easiestJump && totalCredits > 0) {
       const boost = (easiestJump.credits / totalCredits);
       const newSgpa = sgpa + boost;
-      jumpBoostText = `Needs +${easiestJump.marginNeeded.toFixed(2)} pts in ${easiestJump.code} for Grade ${easiestJump.targetGrade} [${this.getGradeLetter(easiestJump.targetGrade)}] (+${boost.toFixed(2)} SGPA → ${newSgpa.toFixed(2)})`;
+      jumpBoostText = `Needs +${easiestJump.marginNeeded.toFixed(2)} pts in ${easiestJump.code} for Grade ${easiestJump.targetGrade} [${this.getGradeLetter(easiestJump.targetGrade)}] (+${boost.toFixed(2)} CGPA → ${newSgpa.toFixed(2)})`;
     }
+
+    const semesterBreakdown = this.semesters
+      .map(sem => ({ sem, ...this.calculateGpa(this.getSemesterCourses(sem.id)) }))
+      .filter(row => row.credits > 0);
 
     return {
       sgpa,
@@ -1949,7 +2268,8 @@ class AcademicRunnerApp {
       gradeDistribution,
       activeCourseCount: this.courses.length,
       easiestJump,
-      jumpBoostText
+      jumpBoostText,
+      semesterBreakdown
     };
   }
 
@@ -2029,6 +2349,18 @@ class AcademicRunnerApp {
 
     if (statJumpDescEl) {
       statJumpDescEl.textContent = stats.jumpBoostText;
+    }
+
+    const breakdownEl = document.getElementById('cgpaSemesterBreakdown');
+    if (breakdownEl) {
+      breakdownEl.innerHTML = stats.semesterBreakdown.map(row => `
+        <span class="cgpa-semester-chip ${row.sem.id === this.currentSemesterId ? 'is-current' : ''}">
+          <span>${this.escapeHtml(row.sem.name.toUpperCase())}</span>
+          <strong>${row.gpa.toFixed(2)}</strong>
+          <span class="cgpa-semester-chip-cr">${row.credits} CR</span>
+        </span>
+      `).join('');
+      breakdownEl.style.display = stats.semesterBreakdown.length > 0 ? 'flex' : 'none';
     }
 
     // Render Grade Distribution Chips
@@ -2123,7 +2455,7 @@ class AcademicRunnerApp {
 
     const gradeLevels = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
 
-    const cardsHtml = filtered.map(course => {
+    const cutoffCardHtml = course => {
       this.ensureCourseCutoffs(course);
       const stats = this.calculateCourseStats(course);
       const autoScore = parseFloat(stats.maxPossibleScore.toFixed(1));
@@ -2282,6 +2614,20 @@ class AcademicRunnerApp {
           </div>
         </div>
       `;
+    };
+
+    const cardsHtml = this.semesters.map(sem => {
+      const semCourses = filtered.filter(c => c.semesterId === sem.id);
+      if (semCourses.length === 0) return '';
+      const gpa = this.calculateGpa(this.getSemesterCourses(sem.id));
+      return `
+        <div class="cutoff-semester-header ${sem.id === this.currentSemesterId ? 'is-current' : ''}">
+          <span class="cutoff-semester-name">${this.escapeHtml(sem.name.toUpperCase())}</span>
+          ${sem.id === this.currentSemesterId ? '<span class="semester-current-pill">CURRENT</span>' : ''}
+          <span class="cutoff-semester-meta">${gpa.credits} CR • SGPA <strong>${gpa.gpa.toFixed(2)}</strong></span>
+        </div>
+        ${semCourses.map(cutoffCardHtml).join('')}
+      `;
     }).join('');
 
     container.innerHTML = cardsHtml;
@@ -2381,13 +2727,13 @@ class AcademicRunnerApp {
     }
   }
 
-  enrollPresetCourse(code) {
+  enrollPresetCourse(code, semesterId = this.currentSemesterId) {
     const cleanCode = (code || '').trim().toUpperCase();
     const preset = COURSE_PRESETS[cleanCode];
     if (!preset) return;
 
-    if (this.courses.some(c => c.code.toUpperCase() === cleanCode)) {
-      this.showToast(`SUBJECT ${cleanCode} ALREADY ENROLLED`);
+    if (this.courses.some(c => c.semesterId === semesterId && c.code.toUpperCase() === cleanCode)) {
+      this.showToast(`SUBJECT ${cleanCode} ALREADY ENROLLED IN ${this.semesterName(semesterId).toUpperCase()}`);
       return;
     }
 
@@ -2406,7 +2752,8 @@ class AcademicRunnerApp {
       assessments: JSON.parse(JSON.stringify(preset.assessments)),
       cutoffs: cutoffs,
       verifiedGrades: official ? [...official.verifiedGrades] : [],
-      maxMarks: official ? official.maxMarks : 100
+      maxMarks: official ? official.maxMarks : 100,
+      semesterId
     };
 
     this.courses.push(newCourse);
@@ -2416,12 +2763,20 @@ class AcademicRunnerApp {
     window.sfx.playSuccess();
   }
 
-  openAddCourseModal() {
+  // semesterId: the semester to preselect. Defaults to the open course's
+  // semester when viewing one, otherwise the current semester.
+  openAddCourseModal(semesterId) {
     const modalOverlay = document.getElementById('addCourseModal');
-    if (modalOverlay) {
-      modalOverlay.classList.add('active');
-      window.sfx.playClick();
+    if (!modalOverlay) return;
+    let target = semesterId && this.getSemester(semesterId) ? semesterId : null;
+    if (!target && this.activeCourseId !== 'home' && this.activeCourseId !== 'cgpa') {
+      const active = this.courses.find(c => c.id === this.activeCourseId);
+      if (active) target = active.semesterId;
     }
+    const select = document.getElementById('newCourseSemester');
+    if (select) select.innerHTML = this.semesterOptionsHtml(target || this.currentSemesterId);
+    modalOverlay.classList.add('active');
+    if (window.sfx) window.sfx.playClick();
   }
 
   closeAddCourseModal() {
@@ -2481,13 +2836,43 @@ class AcademicRunnerApp {
       }
 
       // Home Cockpit & CGPA Tab - Add Course Button or Empty State Action
+      const addCard = e.target.closest('.home-add-card');
+      if (addCard) {
+        this.openAddCourseModal(addCard.dataset.semesterId);
+        return;
+      }
       if (
         e.target.closest('#homeAddCourseBtn') || 
-        e.target.closest('#homeAddCardTrigger') ||
         e.target.closest('#cgpaAddSubjectBtn') ||
         e.target.closest('#openAddCourseFromEmptyBtn')
       ) {
         this.openAddCourseModal();
+        return;
+      }
+
+      // Semester controls
+      if (e.target.closest('#addSemesterBtn')) {
+        this.addSemester();
+        return;
+      }
+      const semToggle = e.target.closest('.semester-toggle-btn');
+      if (semToggle) {
+        this.toggleSemesterCollapsed(semToggle.dataset.semesterToggle);
+        return;
+      }
+      const semCurrentBtn = e.target.closest('.semester-set-current-btn');
+      if (semCurrentBtn) {
+        this.setCurrentSemester(semCurrentBtn.dataset.semesterId);
+        return;
+      }
+      const semRenameBtn = e.target.closest('.semester-rename-btn');
+      if (semRenameBtn) {
+        this.renameSemester(semRenameBtn.dataset.semesterId);
+        return;
+      }
+      const semDeleteBtn = e.target.closest('.semester-delete-btn');
+      if (semDeleteBtn) {
+        this.deleteSemester(semDeleteBtn.dataset.semesterId);
         return;
       }
 
@@ -2696,10 +3081,16 @@ class AcademicRunnerApp {
 
     if (openAddModalBtn && modalOverlay) {
       openAddModalBtn.addEventListener('click', () => {
-        modalOverlay.classList.add('active');
-        window.sfx.playClick();
+        this.openAddCourseModal();
       });
     }
+
+    // Move a course to another semester (single course banner)
+    document.addEventListener('change', (e) => {
+      if (e.target.classList && e.target.classList.contains('semester-move-select')) {
+        this.moveCourseToSemester(e.target.dataset.courseId, e.target.value);
+      }
+    });
 
     if (closeAddModalBtn && modalOverlay) {
       closeAddModalBtn.addEventListener('click', () => {
@@ -2731,6 +3122,8 @@ class AcademicRunnerApp {
         const title = document.getElementById('newCourseTitle').value.trim();
         const credits = parseInt(document.getElementById('newCourseCredits').value) || 3;
         const target = parseFloat(document.getElementById('newCourseTarget').value) || 85;
+        const semSelect = document.getElementById('newCourseSemester');
+        const semesterId = semSelect && this.getSemester(semSelect.value) ? semSelect.value : this.currentSemesterId;
 
         if (!code || !title) return;
 
@@ -2754,7 +3147,8 @@ class AcademicRunnerApp {
           title,
           credits,
           target,
-          assessments
+          assessments,
+          semesterId
         };
         this.ensureCourseCutoffs(newCourse);
 
@@ -2846,7 +3240,15 @@ class AcademicRunnerApp {
     const exportBtn = document.getElementById('exportDataBtn');
     if (exportBtn) {
       exportBtn.addEventListener('click', () => {
-        const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(this.courses, null, 2));
+        // Object form keeps semester names; older versions of the app read `courses` from it too
+        const payload = {
+          version: 2,
+          semesters: this.semesters,
+          currentSemesterId: this.currentSemesterId,
+          activeCourseId: this.activeCourseId,
+          courses: this.courses
+        };
+        const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(payload, null, 2));
         const downloadAnchor = document.createElement('a');
         downloadAnchor.setAttribute('href', dataStr);
         downloadAnchor.setAttribute('download', `iitd_academic_telemetry_${Date.now()}.json`);
@@ -2900,6 +3302,10 @@ class AcademicRunnerApp {
         const lockedNote = lockedCount > 0 ? ` This includes ${lockedCount} locked course(s).` : '';
         if (confirm(`Reset dashboard to fresh baseline? All subjects and telemetry will be cleared.${lockedNote}`)) {
           this.courses = [];
+          this.semesters = [{ id: DEFAULT_SEMESTER_ID, name: DEFAULT_SEMESTER_NAME }];
+          this.currentSemesterId = DEFAULT_SEMESTER_ID;
+          this.collapsedSemesters.clear();
+          this.saveCollapsedSemesters();
           this.activeCourseId = 'home';
           this.saveCourses();
           this.render();
@@ -2952,6 +3358,8 @@ class AcademicRunnerApp {
 
         let importedCourses = null;
         let importedActiveId = null;
+        let importedSemesters = null;
+        let importedCurrentSemesterId = null;
 
         if (Array.isArray(parsed)) {
           importedCourses = parsed;
@@ -2960,6 +3368,12 @@ class AcademicRunnerApp {
             importedCourses = parsed.courses;
             if (parsed.activeCourseId) {
               importedActiveId = parsed.activeCourseId;
+            }
+            if (Array.isArray(parsed.semesters)) {
+              importedSemesters = parsed.semesters;
+            }
+            if (typeof parsed.currentSemesterId === 'string') {
+              importedCurrentSemesterId = parsed.currentSemesterId;
             }
           } else if (Array.isArray(parsed.telemetry)) {
             importedCourses = parsed.telemetry;
@@ -3051,6 +3465,12 @@ class AcademicRunnerApp {
           if (c.locked) {
             courseObj.locked = true;
           }
+          if (typeof c.semesterId === 'string') {
+            courseObj.semesterId = c.semesterId;
+          }
+          if (typeof c.semester === 'string' || typeof c.semester === 'number') {
+            courseObj.semester = c.semester;
+          }
 
           if (c.cutoffs && typeof c.cutoffs === 'object') {
             courseObj.cutoffs = { ...c.cutoffs };
@@ -3075,6 +3495,14 @@ class AcademicRunnerApp {
           return;
         }
 
+        // Files exported before semesters existed carry no semester info:
+        // keep the current semesters and put those courses in the current one.
+        const semesterState = this.reconcileSemesters(
+          importedSemesters || this.semesters,
+          sanitized,
+          importedSemesters ? importedCurrentSemesterId : this.currentSemesterId
+        );
+
         const countStr = sanitized.length === 1 ? '1 course' : `${sanitized.length} courses`;
         if (this.courses.length > 0) {
           const lockedCount = this.courses.filter(c => this.isCourseLocked(c)).length;
@@ -3085,6 +3513,8 @@ class AcademicRunnerApp {
         }
 
         this.courses = sanitized;
+        this.semesters = semesterState.semesters;
+        this.currentSemesterId = semesterState.currentSemesterId;
         if (importedActiveId && this.courses.some(c => c.id === importedActiveId)) {
           this.activeCourseId = importedActiveId;
         } else if (this.activeCourseId === 'home' || this.activeCourseId === 'cgpa') {
@@ -3098,7 +3528,8 @@ class AcademicRunnerApp {
         this.saveCourses();
         localStorage.setItem(INITIALIZED_KEY, 'true');
         this.render();
-        this.showToast(`TELEMETRY LOADED // ${sanitized.length} SUBJECT(S) ONLINE`);
+        const semUsed = new Set(sanitized.map(c => c.semesterId)).size;
+        this.showToast(`TELEMETRY LOADED // ${sanitized.length} SUBJECT(S) IN ${semUsed} SEMESTER(S)`);
         window.sfx.playSuccess();
       } catch (err) {
         console.error('Failed to import JSON telemetry:', err);
